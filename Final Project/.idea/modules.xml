@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/JavAsteroid/JavAsteroid.iml" filepath="$PROJECT_DIR$/JavAsteroid/JavAsteroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/JavAsteroid-android/JavAsteroid-android.iml" filepath="$PROJECT_DIR$/JavAsteroid-android/JavAsteroid-android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/JavAsteroid-desktop/JavAsteroid-desktop.iml" filepath="$PROJECT_DIR$/JavAsteroid-desktop/JavAsteroid-desktop.iml" />
+    </modules>
+  </component>
+</project>
+

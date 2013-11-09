@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Main-Libs">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/JavAsteroid/libs" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/JavAsteroid/libs" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/JavAsteroid/libs" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/JavAsteroid/libs" recursive="false" type="SOURCES" />
+  </library>
+</component>

@@ -1,11 +1,10 @@
 package com.rip.javasteroid.entity;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
-import com.rip.javasteroid.util.TextureWrapper;
+
+import static java.lang.Math.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,37 +14,53 @@ import com.rip.javasteroid.util.TextureWrapper;
  */
 public class Asteroid extends BaseEntity
 {
-	TextureWrapper texture;
+	/* Constants */
+	private static final float ASTEROID_DENSITY = 1.0f;
+	private static final float ASTEROID_RESTITUTION = 1.0f;
+	private static final float MINIMUM_RADIUS = 1;
+	private static final float MAXIMUM_RADIUS = 10;
+	private static final float MINIMUM_VELOCITY = -40;
+	private static final float MAXIMUM_VELOCITY = 40;
 
 	/**
-	 *
-	 * @param pos
-	 * @param world
-	 * @param bodyType
+	 * Initialize an Asteroid
+	 * @param pos - Position of the Asteroid
+	 * @param radius - Radius of the Asteroid
+	 * @param world - World to create the Asteroid in
 	 */
-	public Asteroid(Vector2 pos, World world, BodyDef.BodyType bodyType)
+	public Asteroid(Vector2 pos, float radius, World world)
 	{
-		super(pos, world, bodyType);
+		super(pos, world, BodyDef.BodyType.DynamicBody);
+		// Create the fixture
+		makeCircleFixture(radius, ASTEROID_DENSITY, ASTEROID_RESTITUTION);
+		// Set the velocity
+		setRandomVelocity();
 	}
 
 	/**
-	 *
-	 * @param sp
+	 * Initialize an Asteroid
+	 * The radius is randomly generated
+	 * @param pos - Position of the Asteroid
+	 * @param world - World to create the Asteroid in
 	 */
-	public void Draw(SpriteBatch sp)
+	public Asteroid(Vector2 pos, World world)
 	{
-		texture.Draw(sp);
+		super(pos, world, BodyDef.BodyType.DynamicBody);
+		// Create the fixture
+		makeCircleFixture((float)(MINIMUM_RADIUS + ((MAXIMUM_RADIUS - MINIMUM_RADIUS) * random())), ASTEROID_DENSITY, ASTEROID_RESTITUTION);
+		// Set the velocity
+		setRandomVelocity();
 	}
 
 	/**
-	 *
-	 * @param dt
+	 * Randomly set the velocity of the Asteroid
 	 */
-	public void Update(float dt)
+	private void setRandomVelocity()
 	{
-		UpdateWorldPosition();
-		texture.SetPosition(worldPosition);
-		// Set the correct rotation
-		texture.SetRotation(body.getAngle() * MathUtils.radiansToDegrees);
+		// Set the Linear velocity
+		m_Body.setLinearVelocity((float)(MINIMUM_VELOCITY + ((MAXIMUM_VELOCITY - MINIMUM_VELOCITY) * random())),
+				(float)(MINIMUM_VELOCITY + ((MAXIMUM_VELOCITY - MINIMUM_VELOCITY) * random())));
+		// Set the Angular velocity
+		m_Body.setAngularVelocity((float)(MINIMUM_VELOCITY + ((MAXIMUM_VELOCITY - MINIMUM_VELOCITY) * random())));
 	}
 }

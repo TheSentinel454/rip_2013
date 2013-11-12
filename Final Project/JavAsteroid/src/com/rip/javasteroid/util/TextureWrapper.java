@@ -12,15 +12,15 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class TextureWrapper
 {
-	TextureRegion region;
-	int width;
-	int height;
-	Vector2 position;
-	float scaleX;
-	float scaleY;
-	float originX;
-	float originY;
-	float rotation;
+	private TextureRegion   m_Region;
+	private int             m_Width;
+	private int             m_Height;
+	private Vector2         m_Position;
+	private float           m_ScaleX;
+	private float           m_ScaleY;
+	private float           m_OriginX;
+	private float           m_OriginY;
+	private float           m_Rotation;
 
 	/**
 	 *
@@ -29,41 +29,41 @@ public class TextureWrapper
 	 */
 	public TextureWrapper(TextureRegion region, Vector2 pos)
 	{
-		this.position = pos;
-		SetTextureRegion(region);
+		this.m_Position = pos;
+		setTextureRegion(region);
 	}
 
 	/**
 	 *
 	 * @param region
 	 */
-	public void SetTextureRegion(TextureRegion region)
+	public void setTextureRegion(TextureRegion region)
 	{
-		this.region = region;
-		width = region.getRegionWidth();
-		height = region.getRegionHeight();
-		originX = width / 2;
-		originY = height / 2;
-		scaleX = 1;
-		scaleY = 1;
+		this.m_Region = region;
+		m_Width = region.getRegionWidth();
+		m_Height = region.getRegionHeight();
+		m_OriginX = m_Width / 2;
+		m_OriginY = m_Height / 2;
+		m_ScaleX = 1;
+		m_ScaleY = 1;
 	}
 
 	/**
 	 *
 	 * @return
 	 */
-	public int GetWidth()
+	public int getWidth()
 	{
-		return width;
+		return m_Width;
 	}
 
 	/**
 	 *
 	 * @return
 	 */
-	public int GetHeight()
+	public int getHeight()
 	{
-		return height;
+		return m_Height;
 	}
 
 	/**
@@ -71,37 +71,37 @@ public class TextureWrapper
 	 * @param x
 	 * @param y
 	 */
-	public void SetPosition(float x, float y)
+	public void setPosition(float x, float y)
 	{
-		position.set(x, y);
+		m_Position.set(x, y);
 	}
 
 	/**
 	 *
 	 * @param vector2
 	 */
-	public void SetPosition(Vector2 vector2)
+	public void setPosition(Vector2 vector2)
 	{
-		position.set(vector2);
+		m_Position.set(vector2);
 	}
 
 	/**
 	 *
 	 * @param r
 	 */
-	public void SetRotation(float r)
+	public void setRotation(float r)
 	{
-		rotation = r;
+		m_Rotation = r;
 	}
 
 	/**
 	 *
 	 * @param sp
 	 */
-	public void Draw(SpriteBatch sp)
+	public void draw(SpriteBatch sp)
 	{
-		sp.draw(region, position.x - width / 2, position.y - height / 2,
-				originX, originY, width, height,
-				scaleX, scaleY, rotation);
+		sp.draw(m_Region, m_Position.x - m_Width / 2, m_Position.y - m_Height / 2,
+				m_OriginX, m_OriginY, m_Width, m_Height,
+				m_ScaleX, m_ScaleY, m_Rotation);
 	}
 }

@@ -1,4 +1,4 @@
-package com.rip.javasteroid;
+package com.rip.javasteroid.engine;
 
 /**
  * Created with IntelliJ IDEA.

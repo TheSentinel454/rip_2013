@@ -1,6 +1,9 @@
 package com.rip.javasteroid.entity;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
@@ -107,7 +110,7 @@ public abstract class BaseEntity
 	 */
 	public void updateWorldPosition()
 	{
-		m_WorldPosition.set(ConvertToWorld(m_Body.getPosition().x), ConvertToWorld(m_Body.getPosition().y));
+		m_WorldPosition.set(m_Body.getPosition().x, m_Body.getPosition().y);//ConvertToWorld(m_Body.getPosition().x), ConvertToWorld(m_Body.getPosition().y));
 	}
 
 	/**
@@ -131,5 +134,14 @@ public abstract class BaseEntity
 		m_Texture.setPosition(m_WorldPosition);
 		// Set the correct rotation
 		m_Texture.setRotation(m_Body.getAngle() * MathUtils.radiansToDegrees);
+	}
+
+	/**
+	 *
+	 * @param fileName
+	 */
+	protected void loadTexture(String fileName)
+	{
+		m_Texture = new TextureWrapper(new Texture(Gdx.files.internal(fileName)), m_WorldPosition);
 	}
 }

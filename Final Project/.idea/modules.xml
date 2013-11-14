@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/JavAsteroid/JavAsteroid.iml" filepath="$PROJECT_DIR$/JavAsteroid/JavAsteroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/JavAsteroid-android/JavAsteroid-android.iml" filepath="$PROJECT_DIR$/JavAsteroid-android/JavAsteroid-android.iml" />
       <module fileurl="file://$PROJECT_DIR$/JavAsteroid-desktop/JavAsteroid-desktop.iml" filepath="$PROJECT_DIR$/JavAsteroid-desktop/JavAsteroid-desktop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Planner/Planner.iml" filepath="$PROJECT_DIR$/Planner/Planner.iml" />
     </modules>
   </component>
 </project>

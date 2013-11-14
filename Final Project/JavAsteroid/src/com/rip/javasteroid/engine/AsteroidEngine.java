@@ -4,10 +4,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.rip.javasteroid.entity.Asteroid;
+import com.rip.javasteroid.entity.BaseEntity;
 import com.rip.javasteroid.entity.Ship;
+import com.rip.javasteroid.remote.RmiServer;
+
+import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,12 +28,25 @@ public class AsteroidEngine implements Screen, ContactListener
 
 	private OrthographicCamera m_Camera;
 	private World m_World;
+	private SpriteBatch m_SpriteBatch;
 	private Box2DDebugRenderer m_DebugRenderer;
 	private InputHandler m_Handler;
+	private RmiServer m_Server;
+
+	private ArrayList<BaseEntity> m_Entities = new ArrayList<BaseEntity>();
 
 	public AsteroidEngine()
 	{
+		try
+		{
+			m_Server = new RmiServer();
+		}
+		catch(Exception e)
+		{
+			System.out.println("RmiServer Initialization Exception: " + e.getMessage());
+		}
 		m_World = new World(new Vector2(0, 0), true);
+		m_SpriteBatch = new SpriteBatch();
 		m_Camera = new OrthographicCamera();
 		m_Camera.viewportHeight = 320;
 		m_Camera.viewportWidth = 480;
@@ -41,7 +59,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		Body groundBody = m_World.createBody(groundBodyDef);
 		PolygonShape groundBox = new PolygonShape();
 		groundBox.setAsBox((m_Camera.viewportWidth) * 2, 10.0f);
-		groundBody.setUserData(new Ship(new Vector2(0,0), m_World));
+		groundBody.setUserData(new Ship(new Vector2(0, 0), m_World));
 		groundBody.createFixture(groundBox, 0.0f);
 
 		groundBodyDef.position.set(new Vector2(0, 310));
@@ -62,10 +80,10 @@ public class AsteroidEngine implements Screen, ContactListener
 
 		groundBox.dispose();
 
-		for(int i = 0; i < 50; i++)
+		for(int i = 0; i < 10; i++)
 		{
-			new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 + (10 * i)), m_World);
-			new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 - (10 * i)), m_World);
+			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 + (10 * i)), m_World));
+			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 - (10 * i)), m_World));
 		}
 		/*
 		// Dynamic Body
@@ -104,6 +122,13 @@ public class AsteroidEngine implements Screen, ContactListener
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
 		m_DebugRenderer.render(m_World, m_Camera.combined);
+		m_SpriteBatch.begin();
+		for(BaseEntity be: m_Entities)
+			be.draw(m_SpriteBatch);
+		m_SpriteBatch.end();
+
+		for(BaseEntity be: m_Entities)
+			be.update(delta);
 		m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
 	}
 
@@ -141,6 +166,7 @@ public class AsteroidEngine implements Screen, ContactListener
 	{
 		m_World.dispose();
 		m_DebugRenderer.dispose();
+		m_SpriteBatch.dispose();
 	}
 
 	@Override

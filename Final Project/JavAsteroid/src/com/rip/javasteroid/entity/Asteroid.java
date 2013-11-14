@@ -35,6 +35,8 @@ public class Asteroid extends BaseEntity
 		makeCircleFixture(radius, ASTEROID_DENSITY, ASTEROID_RESTITUTION);
 		// Set the velocity
 		setRandomVelocity();
+		// Load the texture
+		loadTexture("data/Asteroid_M2.png");
 	}
 
 	/**
@@ -45,11 +47,7 @@ public class Asteroid extends BaseEntity
 	 */
 	public Asteroid(Vector2 pos, World world)
 	{
-		super(pos, world, BodyDef.BodyType.DynamicBody);
-		// Create the fixture
-		makeCircleFixture((float)(MINIMUM_RADIUS + ((MAXIMUM_RADIUS - MINIMUM_RADIUS) * random())), ASTEROID_DENSITY, ASTEROID_RESTITUTION);
-		// Set the velocity
-		setRandomVelocity();
+		this(pos, (float)(MINIMUM_RADIUS + ((MAXIMUM_RADIUS - MINIMUM_RADIUS) * random())), world);
 	}
 
 	/**

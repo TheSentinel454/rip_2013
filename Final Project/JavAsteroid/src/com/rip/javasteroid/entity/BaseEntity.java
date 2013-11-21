@@ -3,10 +3,10 @@ package com.rip.javasteroid.entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.util.TextureWrapper;
 
 /**
@@ -17,12 +17,13 @@ import com.rip.javasteroid.util.TextureWrapper;
  */
 public abstract class BaseEntity
 {
-	static final float WORLD_TO_BOX = 0.01f;
-	static final float BOX_TO_WORLD = 100f;
+	static final float BOX_TO_WORLD = 1.75f;
+	static final float WORLD_TO_BOX = 1 / BOX_TO_WORLD;
 
 	protected Body m_Body;
 	protected Vector2 m_WorldPosition;
 	protected TextureWrapper m_Texture;
+	protected float m_Radius;
 
 	float ConvertToBox(float x)
 	{
@@ -58,7 +59,7 @@ public abstract class BaseEntity
 	{
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = bodyType;
-		bodyDef.position.set(pos.x, pos.y);// ConvertToBox(pos.x), ConvertToBox(pos.y));
+		bodyDef.position.set(pos.x, pos.y);//ConvertToBox(pos.x), ConvertToBox(pos.y));
 		bodyDef.angle = angle;
 		m_Body = world.createBody(bodyDef);
 	}
@@ -95,11 +96,12 @@ public abstract class BaseEntity
 	 */
 	protected void makeCircleFixture(float radius, float density, float restitution)
 	{
+		m_Radius = radius;//ConvertToBox(radius));
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.density = density;
 		fixtureDef.restitution = restitution;
 		fixtureDef.shape = new CircleShape();
-		fixtureDef.shape.setRadius(radius);//ConvertToBox(radius));
+		fixtureDef.shape.setRadius(m_Radius);
 
 		m_Body.createFixture(fixtureDef);
 		fixtureDef.shape.dispose();
@@ -111,6 +113,22 @@ public abstract class BaseEntity
 	public void updateWorldPosition()
 	{
 		m_WorldPosition.set(m_Body.getPosition().x, m_Body.getPosition().y);//ConvertToWorld(m_Body.getPosition().x), ConvertToWorld(m_Body.getPosition().y));
+	}
+
+	public void updatePosition()
+	{
+		float old_x = m_Body.getPosition().x;
+		float old_y = m_Body.getPosition().y;
+
+		if (old_x > (AsteroidEngine.WIDTH + m_Radius))
+			m_Body.setTransform(-m_Radius, old_y, m_Body.getAngle());
+		else if (old_x < -m_Radius)
+			m_Body.setTransform((AsteroidEngine.WIDTH + m_Radius), old_y, m_Body.getAngle());
+
+		if (old_y > (AsteroidEngine.HEIGHT+ m_Radius))
+			m_Body.setTransform(m_Body.getPosition().x, -m_Radius, m_Body.getAngle());
+		else if (old_y < -m_Radius)
+			m_Body.setTransform(m_Body.getPosition().x, (AsteroidEngine.HEIGHT + m_Radius), m_Body.getAngle());
 	}
 
 	/**
@@ -128,6 +146,8 @@ public abstract class BaseEntity
 	 */
 	public void update(float dt)
 	{
+		// Update the position Toroidally
+		updatePosition();
 		// Update the world position
 		updateWorldPosition();
 		// Set the updated world position

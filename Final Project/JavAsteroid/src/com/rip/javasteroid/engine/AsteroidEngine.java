@@ -22,6 +22,8 @@ import java.util.ArrayList;
  */
 public class AsteroidEngine implements Screen, ContactListener
 {
+	public static final int HEIGHT = 320;
+	public static final int WIDTH = 480;
 	private static final float  BOX_STEP                = 1/60f;
 	private static final int    BOX_VELOCITY_ITERATIONS = 6;
 	private static final int    BOX_POSITION_ITERATIONS = 2;
@@ -32,6 +34,7 @@ public class AsteroidEngine implements Screen, ContactListener
 	private Box2DDebugRenderer m_DebugRenderer;
 	private InputHandler m_Handler;
 	private RmiServer m_Server;
+	private Ship m_Ship;
 
 	private ArrayList<BaseEntity> m_Entities = new ArrayList<BaseEntity>();
 
@@ -48,43 +51,47 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_World = new World(new Vector2(0, 0), true);
 		m_SpriteBatch = new SpriteBatch();
 		m_Camera = new OrthographicCamera();
-		m_Camera.viewportHeight = 320;
-		m_Camera.viewportWidth = 480;
+		m_Camera.viewportHeight = HEIGHT;
+		m_Camera.viewportWidth = WIDTH;
 		m_Camera.position.set(m_Camera.viewportWidth * .5f, m_Camera.viewportHeight * .5f, 0f);
 		m_Camera.update();
 
 		// Ground
-		BodyDef groundBodyDef =new BodyDef();
-		groundBodyDef.position.set(new Vector2(0, 10));
-		Body groundBody = m_World.createBody(groundBodyDef);
-		PolygonShape groundBox = new PolygonShape();
-		groundBox.setAsBox((m_Camera.viewportWidth) * 2, 10.0f);
-		groundBody.setUserData(new Ship(new Vector2(0, 0), m_World));
-		groundBody.createFixture(groundBox, 0.0f);
+//		BodyDef groundBodyDef =new BodyDef();
+//		groundBodyDef.position.set(new Vector2(0, 10));
+//		Body groundBody = m_World.createBody(groundBodyDef);
+//		PolygonShape groundBox = new PolygonShape();
+//		groundBox.setAsBox((m_Camera.viewportWidth) * 2, 10.0f);
+//		groundBody.setUserData(new Ship(new Vector2(0, 0), m_World));
+//		groundBody.createFixture(groundBox, 0.0f);
+//
+//		groundBodyDef.position.set(new Vector2(0, 310));
+//		Body groundBody2 = m_World.createBody(groundBodyDef);
+//		groundBody2.setUserData(new Ship(new Vector2(0,0), m_World));
+//		groundBody2.createFixture(groundBox, 0.0f);
+//
+//		groundBox.setAsBox(10.0f, (m_Camera.viewportHeight) * 2);
+//		groundBodyDef.position.set(new Vector2(10, 0));
+//		Body groundBody3 = m_World.createBody(groundBodyDef);
+//		groundBody3.setUserData(new Ship(new Vector2(0,0), m_World));
+//		groundBody3.createFixture(groundBox, 0.0f);
+//
+//		groundBodyDef.position.set(new Vector2(470, 0));
+//		Body groundBody4 = m_World.createBody(groundBodyDef);
+//		groundBody4.setUserData(new Ship(new Vector2(0,0), m_World));
+//		groundBody4.createFixture(groundBox, 0.0f);
+//
+//		groundBox.dispose();
 
-		groundBodyDef.position.set(new Vector2(0, 310));
-		Body groundBody2 = m_World.createBody(groundBodyDef);
-		groundBody2.setUserData(new Ship(new Vector2(0,0), m_World));
-		groundBody2.createFixture(groundBox, 0.0f);
-
-		groundBox.setAsBox(10.0f, (m_Camera.viewportHeight) * 2);
-		groundBodyDef.position.set(new Vector2(10, 0));
-		Body groundBody3 = m_World.createBody(groundBodyDef);
-		groundBody3.setUserData(new Ship(new Vector2(0,0), m_World));
-		groundBody3.createFixture(groundBox, 0.0f);
-
-		groundBodyDef.position.set(new Vector2(470, 0));
-		Body groundBody4 = m_World.createBody(groundBodyDef);
-		groundBody4.setUserData(new Ship(new Vector2(0,0), m_World));
-		groundBody4.createFixture(groundBox, 0.0f);
-
-		groundBox.dispose();
-
-		for(int i = 0; i < 10; i++)
-		{
-			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 + (10 * i)), m_World));
-			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 - (10 * i)), m_World));
-		}
+		m_Ship = new Ship(new Vector2(50,50), m_World);
+		m_Entities.add(m_Ship);
+//		m_Entities.add(new Ship(new Vector2(75,50), m_World));
+//		m_Entities.add(new Ship(new Vector2(50,100), m_World));
+//		for(int i = 0; i < 3; i++)
+//		{
+//			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 + (10 * i)), m_World));
+//			m_Entities.add(new Asteroid(new Vector2(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2 - (10 * i)), m_World));
+//		}
 		/*
 		// Dynamic Body
 		BodyDef bodyDef = new BodyDef();
@@ -112,7 +119,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_DebugRenderer = new Box2DDebugRenderer();
 		m_World.setContactListener(this);
 
-		m_Handler = new InputHandler();
+		m_Handler = new InputHandler(m_Ship);
 	}
 
 	@Override

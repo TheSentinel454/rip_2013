@@ -20,6 +20,7 @@ public class Ship extends BaseEntity
 
 	private static final float SHIP_LINEAR_ACCELERATION = 105.0f;
 	private static final float SHIP_MAX_LINEAR_VELOCITY = 40.0f;
+    private static final float SHIP_DRAG_COEFFICIENT = 0.0f;
 
 	//private static final float SHIP_ANGULAR_ACCELERATION = 105.0f;
 	private static final float SHIP_ANGULAR_VELOCITY = 5.0f;
@@ -71,23 +72,32 @@ public class Ship extends BaseEntity
 
 	private void updateLinearVelocity(float dt)
 	{
-		// Calculate the velocity magnitude
-		m_Velocity = (float)Math.sqrt(Math.pow(m_Body.getLinearVelocity().x, 2) + Math.pow(m_Body.getLinearVelocity().y, 2));
-		//System.out.println("Velocity Magnitude: " + m_Velocity);
-		//System.out.println("Velocity X/Y: (" + m_Body.getLinearVelocity().x + "," + m_Body.getLinearVelocity().y + ")");
-		// Update the velocity based on the acceleration
-		m_Velocity += ((m_Moving ? SHIP_LINEAR_ACCELERATION : -SHIP_LINEAR_ACCELERATION) * dt/1.0f);
-		if (m_Velocity > SHIP_MAX_LINEAR_VELOCITY)
-			m_Velocity = SHIP_MAX_LINEAR_VELOCITY;
-		else if (m_Velocity <=0)
-			m_Velocity = 0;
-		//System.out.println("NEW Velocity Magnitude: " + m_Velocity);
-		// Now convert the magnitude/angle back into x/y Linear velocity
-		float newX = (float)(Math.abs(m_Velocity) * Math.cos(getAngle()));
-		float newY = (float)(Math.abs(m_Velocity) * Math.sin(getAngle()));
-		//System.out.println("NEW Velocity X/Y: (" + newX + "," + newY + ")");
-		m_Body.setLinearVelocity(newX, newY);
-	}
+        Vector2 velocity = m_Body.getLinearVelocity(); //Pull current velocity
+        m_Velocity = velocity.len();
+
+        //Apply drag on ship proportional to current velocity squared and opposite current direction of motion
+        Vector2 dragV = new Vector2(velocity);
+        dragV.nor();
+        dragV.scl(-1*(float)(SHIP_DRAG_COEFFICIENT * m_Velocity * m_Velocity * dt ));
+        velocity.add(dragV);
+
+        //If moving (based on keyboard input), apply change in velocity in line with ship body axis
+        if(m_Moving) {
+            Vector2 deltaV = new Vector2();
+            deltaV.set((float)Math.cos(m_Body.getAngle()), (float)Math.sin(m_Body.getAngle()));
+            deltaV.scl((float)(SHIP_LINEAR_ACCELERATION * dt));
+            velocity.add(deltaV);
+        }
+
+        //Make sure new velocity is at or below max velocity
+        if(velocity.len() > SHIP_MAX_LINEAR_VELOCITY) {
+            //Scale down to max velocity but maintain direction to allow for turning even at max velocity
+            velocity.nor();
+            velocity.scl(SHIP_MAX_LINEAR_VELOCITY);
+        }
+        //Update body field
+        m_Body.setLinearVelocity(velocity);
+    }
 
 	private void updateAngularVelocity(float dt)
 	{

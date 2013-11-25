@@ -1,3 +1,4 @@
+import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.BaseEntity;
 import com.rip.javasteroid.remote.QueryInterface;
 import com.rip.javasteroid.remote.RmiServer;
@@ -19,7 +20,7 @@ public class Main
 		try
 		{
 			m_Server = (QueryInterface) Naming.lookup("rmi://localhost/Query");
-			ArrayList<BaseEntity> data = m_Server.getGameData();
+			GameData data = m_Server.getGameData();
 		}
 		catch(Exception e)
 		{

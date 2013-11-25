@@ -51,34 +51,6 @@ public class TextureWrapper
 
 	/**
 	 *
-	 * @return
-	 */
-	public int getWidth()
-	{
-		return m_Width;
-	}
-
-	/**
-	 *
-	 * @return
-	 */
-	public int getHeight()
-	{
-		return m_Height;
-	}
-
-	/**
-	 *
-	 * @param x
-	 * @param y
-	 */
-	public void setPosition(float x, float y)
-	{
-		m_Position.set(x, y);
-	}
-
-	/**
-	 *
 	 * @param vector2
 	 */
 	public void setPosition(Vector2 vector2)

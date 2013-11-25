@@ -17,33 +17,24 @@ import com.rip.javasteroid.util.TextureWrapper;
  */
 public abstract class BaseEntity
 {
-	static final float BOX_TO_WORLD = 1.75f;
-	static final float WORLD_TO_BOX = 1 / BOX_TO_WORLD;
+	/* Private Attributes */
+	protected Body				m_Body;
+	protected TextureWrapper	m_Texture;
+	protected float				m_Radius;
 
-	protected Body m_Body;
-	protected Vector2 m_WorldPosition;
-	protected TextureWrapper m_Texture;
-	protected float m_Radius;
-
-	float ConvertToBox(float x)
+	public Body getBody()
 	{
-		return x * WORLD_TO_BOX;
-	}
-
-	float ConvertToWorld(float x)
-	{
-		return x * BOX_TO_WORLD;
+		return m_Body;
 	}
 
 	/**
-	 *
-	 * @param pos
-	 * @param world
-	 * @param bodyType
+	 * Base Entity constructor
+	 * @param pos - Position of the entity
+	 * @param world - World to create the entity in
+	 * @param bodyType - Body type of the entity
 	 */
 	public BaseEntity(Vector2 pos, World world, BodyDef.BodyType bodyType)
 	{
-		m_WorldPosition = new Vector2();
 		createBody(world, pos, 0, bodyType);
 		m_Body.setUserData(this);
 	}
@@ -59,33 +50,9 @@ public abstract class BaseEntity
 	{
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = bodyType;
-		bodyDef.position.set(pos.x, pos.y);//ConvertToBox(pos.x), ConvertToBox(pos.y));
+		bodyDef.position.set(pos.x, pos.y);
 		bodyDef.angle = angle;
 		m_Body = world.createBody(bodyDef);
-	}
-
-	/**
-	 * Make a rectangular fixture of specified width, height, density, and restitution
-	 * @param width Width of the rectangular fixture
-	 * @param height Height of the rectangular fixture
-	 * @param density Density of the fixture
-	 * @param restitution Restitution of the fixture
-	 */
-	protected void makeRectFixture(float width, float height, float density, float restitution)
-	{
-		PolygonShape bodyShape = new PolygonShape();
-
-		float w = ConvertToBox(width / 2f);
-		float h = ConvertToBox(height / 2f);
-		bodyShape.setAsBox(w, h);
-
-		FixtureDef fixtureDef = new FixtureDef();
-		fixtureDef.density = density;
-		fixtureDef.restitution = restitution;
-		fixtureDef.shape = bodyShape;
-
-		m_Body.createFixture(fixtureDef);
-		bodyShape.dispose();
 	}
 
 	/**
@@ -96,7 +63,7 @@ public abstract class BaseEntity
 	 */
 	protected void makeCircleFixture(float radius, float density, float restitution)
 	{
-		m_Radius = radius;//ConvertToBox(radius));
+		m_Radius = radius;
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.density = density;
 		fixtureDef.restitution = restitution;
@@ -108,13 +75,8 @@ public abstract class BaseEntity
 	}
 
 	/**
-	 * Update the internal world position based on the m_Body's current position
+	 * Update the body position based on the user's movement
 	 */
-	public void updateWorldPosition()
-	{
-		m_WorldPosition.set(m_Body.getPosition().x, m_Body.getPosition().y);//ConvertToWorld(m_Body.getPosition().x), ConvertToWorld(m_Body.getPosition().y));
-	}
-
 	public void updatePosition()
 	{
 		float old_x = m_Body.getPosition().x;
@@ -148,20 +110,31 @@ public abstract class BaseEntity
 	{
 		// Update the position Toroidally
 		updatePosition();
-		// Update the world position
-		updateWorldPosition();
-		// Set the updated world position
-		m_Texture.setPosition(m_WorldPosition);
-		// Set the correct rotation
-		m_Texture.setRotation(m_Body.getAngle() * MathUtils.radiansToDegrees);
+		// Make sure we have a texture
+		if (m_Texture != null)
+		{
+			// Set the updated world position
+			m_Texture.setPosition(m_Body.getPosition());
+			// Set the correct rotation
+			m_Texture.setRotation((m_Body.getAngle() * MathUtils.radiansToDegrees)+180);
+		}
 	}
 
 	/**
-	 *
-	 * @param fileName
+	 * Load and set the texture
+	 * @param fileName - Filename of the texture to load
 	 */
 	protected void loadTexture(String fileName)
 	{
-		m_Texture = new TextureWrapper(new Texture(Gdx.files.internal(fileName)), m_WorldPosition);
+		m_Texture = new TextureWrapper(new Texture(Gdx.files.internal(fileName)), m_Body.getPosition());
+	}
+
+	/**
+	 * Set the texture
+	 * @param texture - Texture to be used
+	 */
+	protected void setTexture(TextureWrapper texture)
+	{
+		m_Texture = texture;
 	}
 }

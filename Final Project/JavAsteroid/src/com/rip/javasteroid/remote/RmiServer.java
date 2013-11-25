@@ -1,5 +1,6 @@
 package com.rip.javasteroid.remote;
 
+import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.BaseEntity;
 
 import java.net.InetAddress;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
  */
 public class RmiServer extends UnicastRemoteObject implements QueryInterface
 {
+	private GameData m_GameData;
 	// This method is called from the remote client by the RMI.
 	// This is the implementation of the "Query Interface"
 
@@ -27,11 +29,9 @@ public class RmiServer extends UnicastRemoteObject implements QueryInterface
 	 * @return Game Data
 	 * @throws RemoteException
 	 */
-	public ArrayList<BaseEntity> getGameData() throws RemoteException
+	public GameData getGameData() throws RemoteException
 	{
-		// TODO: Return valid Game Data...
-		// May have to wrap game data in a wrapper to be able to add whatever data is needed
-		return null;
+		return m_GameData;
 	}
 
 	/**
@@ -39,8 +39,9 @@ public class RmiServer extends UnicastRemoteObject implements QueryInterface
 	 * Game data from a remote process
 	 * @throws RemoteException
 	 */
-	public RmiServer() throws RemoteException
+	public RmiServer(GameData gameData) throws RemoteException
 	{
+		m_GameData = gameData;
 		try
 		{
 			LocateRegistry.createRegistry(1099);

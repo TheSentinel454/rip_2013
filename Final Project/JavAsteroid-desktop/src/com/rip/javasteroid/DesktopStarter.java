@@ -2,6 +2,7 @@ package com.rip.javasteroid;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
+import com.rip.javasteroid.engine.AsteroidEngine;
 
 public class DesktopStarter
 {
@@ -10,8 +11,8 @@ public class DesktopStarter
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		cfg.title = "JavAsteroid";
 		cfg.useGL20 = true;
-		cfg.width = 800;
-		cfg.height = 600;
+		cfg.width = AsteroidEngine.WIDTH;
+		cfg.height = AsteroidEngine.HEIGHT;
 		
 		new LwjglApplication(new JavAsteroid(), cfg);
 	}

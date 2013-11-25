@@ -1,5 +1,6 @@
 package com.rip.javasteroid.remote;
 
+import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.BaseEntity;
 
 import java.rmi.Remote;
@@ -14,5 +15,5 @@ import java.util.ArrayList;
  */
 public interface QueryInterface extends Remote
 {
-	ArrayList<BaseEntity> getGameData() throws RemoteException;
+	GameData getGameData() throws RemoteException;
 }

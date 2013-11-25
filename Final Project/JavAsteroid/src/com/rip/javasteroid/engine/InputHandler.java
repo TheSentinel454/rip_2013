@@ -30,7 +30,6 @@ public class InputHandler implements InputProcessor
 				break;
 			case Input.Keys.SPACE:
 				m_Ship.fire();
-				System.out.println("SPACE keyDown");
 				break;
 			case Input.Keys.RIGHT:
 				m_Ship.setRotatingRight(true);

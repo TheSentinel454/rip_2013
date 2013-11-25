@@ -16,4 +16,11 @@ import java.util.ArrayList;
 public interface QueryInterface extends Remote
 {
 	GameData getGameData() throws RemoteException;
+	void startForward() throws RemoteException;
+	void stopForward() throws RemoteException;
+	void startRight() throws RemoteException;
+	void stopRight() throws RemoteException;
+	void startLeft() throws RemoteException;
+	void stopLeft() throws RemoteException;
+	void fire() throws RemoteException;
 }

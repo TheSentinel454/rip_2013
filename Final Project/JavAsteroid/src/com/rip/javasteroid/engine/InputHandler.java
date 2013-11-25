@@ -12,12 +12,46 @@ import com.rip.javasteroid.entity.Ship;
  */
 public class InputHandler implements InputProcessor
 {
+	/* Private Attributes */
 	private Ship m_Ship;
 
+	/**
+	 * Input Handler constructor
+	 * @param ship - Ship to use for handing the operations to
+	 */
 	public InputHandler(Ship ship)
 	{
 		// Save the ship for setting the accelerations
 		m_Ship = ship;
+	}
+
+	public void startForward()
+	{
+		m_Ship.setMoving(true);
+	}
+	public void stopForward()
+	{
+		m_Ship.setMoving(false);
+	}
+	public void startRight()
+	{
+		m_Ship.setRotatingRight(true);
+	}
+	public void stopRight()
+	{
+		m_Ship.setRotatingRight(false);
+	}
+	public void startLeft()
+	{
+		m_Ship.setRotatingLeft(true);
+	}
+	public void stopLeft()
+	{
+		m_Ship.setRotatingLeft(false);
+	}
+	public void fire()
+	{
+		m_Ship.fire();
 	}
 
 	@Override
@@ -26,16 +60,16 @@ public class InputHandler implements InputProcessor
 		switch(keycode)
 		{
 			case Input.Keys.UP:
-				m_Ship.setMoving(true);
+				startForward();
 				break;
 			case Input.Keys.SPACE:
-				m_Ship.fire();
+				fire();
 				break;
 			case Input.Keys.RIGHT:
-				m_Ship.setRotatingRight(true);
+				startRight();
 				break;
 			case Input.Keys.LEFT:
-				m_Ship.setRotatingLeft(true);
+				startLeft();
 				break;
 		}
 		return true;
@@ -47,13 +81,13 @@ public class InputHandler implements InputProcessor
 		switch(keycode)
 		{
 			case Input.Keys.UP:
-				m_Ship.setMoving(false);
+				stopForward();
 				break;
 			case Input.Keys.RIGHT:
-				m_Ship.setRotatingRight(false);
+				stopRight();
 				break;
 			case Input.Keys.LEFT:
-				m_Ship.setRotatingLeft(false);
+				stopLeft();
 				break;
 		}
 		return true;
@@ -62,36 +96,31 @@ public class InputHandler implements InputProcessor
 	@Override
 	public boolean keyTyped(char character)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
-
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
-
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
-
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
-
 	@Override
 	public boolean mouseMoved(int screenX, int screenY)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
-
 	@Override
 	public boolean scrolled(int amount)
 	{
-		return false;  //To change body of implemented methods use File | Settings | File Templates.
+		return false;
 	}
 }

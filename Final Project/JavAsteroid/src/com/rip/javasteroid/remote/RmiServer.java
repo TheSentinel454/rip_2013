@@ -1,6 +1,7 @@
 package com.rip.javasteroid.remote;
 
 import com.rip.javasteroid.GameData;
+import com.rip.javasteroid.engine.InputHandler;
 import com.rip.javasteroid.entity.BaseEntity;
 
 import java.net.InetAddress;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 public class RmiServer extends UnicastRemoteObject implements QueryInterface
 {
 	private GameData m_GameData;
+	private InputHandler m_Handler;
 	// This method is called from the remote client by the RMI.
 	// This is the implementation of the "Query Interface"
 
@@ -34,14 +36,57 @@ public class RmiServer extends UnicastRemoteObject implements QueryInterface
 		return m_GameData;
 	}
 
+	@Override
+	public void startForward() throws RemoteException
+	{
+		m_Handler.startForward();
+	}
+
+	@Override
+	public void stopForward() throws RemoteException
+	{
+		m_Handler.stopForward();
+	}
+
+	@Override
+	public void startRight() throws RemoteException
+	{
+		m_Handler.startRight();
+	}
+
+	@Override
+	public void stopRight() throws RemoteException
+	{
+		m_Handler.stopRight();
+	}
+
+	@Override
+	public void startLeft() throws RemoteException
+	{
+		m_Handler.startLeft();
+	}
+
+	@Override
+	public void stopLeft() throws RemoteException
+	{
+		m_Handler.stopLeft();
+	}
+
+	@Override
+	public void fire() throws RemoteException
+	{
+		m_Handler.fire();
+	}
+
 	/**
 	 * Initialize the RMI Server to allow for querying of
 	 * Game data from a remote process
 	 * @throws RemoteException
 	 */
-	public RmiServer(GameData gameData) throws RemoteException
+	public RmiServer(GameData gameData, InputHandler handler) throws RemoteException
 	{
 		m_GameData = gameData;
+		m_Handler = handler;
 		try
 		{
 			LocateRegistry.createRegistry(1099);

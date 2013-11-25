@@ -28,12 +28,6 @@ public class Ship extends BaseEntity
 	private static final float FIRE_COOLDOWN = 0.25f;
 	private static final float SHIP_ANGULAR_VELOCITY = 1.5f;
 
-	private static final float SHIP_LINEAR_ACCELERATION = 105.0f;
-	private static final float SHIP_MAX_LINEAR_VELOCITY = 40.0f;
-
-	//private static final float SHIP_ANGULAR_ACCELERATION = 105.0f;
-	private static final float SHIP_ANGULAR_VELOCITY = 5.0f;
-
 	public void setMoving(boolean moving)
 	{
 		this.m_Moving = moving;
@@ -200,5 +194,20 @@ public class Ship extends BaseEntity
 	 */
 	public void fire()
 	{
+		// See if we can fire
+		if (m_AbleToShoot)
+		{
+			// Initialize a new bullet
+			Vector2 velocity = new Vector2();
+			velocity.set((float)Math.cos(m_Body.getAngle()), (float)Math.sin(m_Body.getAngle()));
+			velocity.nor();
+			velocity.scl(Bullet.BULLET_VELOCITY);
+			Bullet bullet = new Bullet(m_Body.getPosition(), velocity, m_World);
+			// Add to the list
+			m_Bullets.add(bullet);
+			// Start cool down
+			m_AbleToShoot = false;
+			m_Cooldown = FIRE_COOLDOWN;
+		}
 	}
 }

@@ -15,8 +15,6 @@ import com.rip.javasteroid.entity.Bullet;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.RmiServer;
 
-import java.util.ArrayList;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Luke
@@ -61,7 +59,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Handler = new InputHandler(m_GameData.getShip());
 		try
 		{
-			m_Server = new RmiServer(m_GameData);
+			m_Server = new RmiServer(m_GameData, m_Handler);
 		}
 		catch(Exception e)
 		{

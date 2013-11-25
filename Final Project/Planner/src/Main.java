@@ -21,6 +21,8 @@ public class Main
 		{
 			m_Server = (QueryInterface) Naming.lookup("rmi://localhost/Query");
 			GameData data = m_Server.getGameData();
+			// Test fire
+			m_Server.fire();
 		}
 		catch(Exception e)
 		{

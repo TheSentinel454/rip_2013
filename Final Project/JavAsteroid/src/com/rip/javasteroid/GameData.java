@@ -5,7 +5,9 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.entity.Asteroid;
 import com.rip.javasteroid.entity.Ship;
+import com.rip.javasteroid.remote.EntityData;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -14,21 +16,33 @@ import java.util.ArrayList;
  * Date: 11/22/13
  * Time: 9:28 PM
  */
-public class GameData
+public class GameData implements Serializable
 {
 	/* Private Attributes */
 	private int m_Score = 0;
 	private int m_Lives = 3;
-	private Ship m_Ship;
-	private ArrayList<Asteroid> m_Asteroids;
+	private EntityData m_ShipData;
+	private ArrayList<EntityData> m_AsteroidData;
 
 	/**
-	 * Get the Ship
-	 * @return Ship
+	 * Update the ship data
+	 * @param ship - Ship to update with
 	 */
-	public Ship getShip()
+	public void updateShipData(Ship ship)
 	{
-		return m_Ship;
+		// Update the ship data
+		m_ShipData.update(ship);
+	}
+
+	/**
+	 * Update the Asteroid data
+	 * @param asteroids
+	 */
+	public void updateAsteroidData(ArrayList<Asteroid> asteroids)
+	{
+		m_AsteroidData.clear();
+		for(Asteroid asteroid: asteroids)
+			m_AsteroidData.add(EntityData.fromBaseEntity(asteroid));
 	}
 
 	/**
@@ -50,42 +64,16 @@ public class GameData
 	}
 
 	/**
-	 * Get the Asteroids
-	 * @return List of Asteroids
-	 */
-	public ArrayList<Asteroid> getAsteroids()
-	{
-		return m_Asteroids;
-	}
-
-	/**
-	 * Get a specific Asteroid
-	 * @param index - Index of the Asteroid to get
-	 * @return Asteroid
-	 */
-	public Asteroid getAsteroid(int index)
-	{
-		return (index < m_Asteroids.size() ? m_Asteroids.get(index) : null);
-	}
-
-	/**
-	 * Add an Asteroid
-	 * @param asteroid - Asteroid to be added
-	 */
-	public void addAsteroid(Asteroid asteroid)
-	{
-		m_Asteroids.add(asteroid);
-	}
-
-	/**
 	 * Game data constructor
-	 * @param world - Box2D world
 	 */
-	public GameData(World world)
+	public GameData()
 	{
-		reset(world);
+		reset();
 	}
 
+	/**
+	 * Dispose the game data
+	 */
 	public void dispose()
 	{
 
@@ -93,12 +81,11 @@ public class GameData
 
 	/**
 	 * Reset the game data to defaults
-	 * @param world
 	 */
-	public void reset(World world)
+	public void reset()
 	{
-		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), world);
-		m_Asteroids = new ArrayList<Asteroid>();
+		m_ShipData = new EntityData();
+		m_AsteroidData = new ArrayList<EntityData>();
 		m_Score = 0;
 		m_Lives = 3;
 	}

@@ -15,6 +15,8 @@ import com.rip.javasteroid.entity.Bullet;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.RmiServer;
 
+import java.util.ArrayList;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Luke
@@ -41,7 +43,9 @@ public class AsteroidEngine implements Screen, ContactListener
 	private InputHandler		m_Handler;
 	private RmiServer			m_Server;
 	private GameData			m_GameData;
-	private BitmapFont 			m_Font;
+	private BitmapFont			m_Font;
+	private Ship				m_Ship;
+	private ArrayList<Asteroid> m_Asteroids;
 
 	public AsteroidEngine()
 	{
@@ -51,12 +55,14 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Camera = new OrthographicCamera(WIDTH, HEIGHT);
 		m_Camera.position.set(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2, 0f);
 		m_Camera.update();
-		m_GameData = new GameData(m_World);
+		m_GameData = new GameData();
 
 		m_DebugRenderer = new Box2DDebugRenderer();
 		m_World.setContactListener(this);
+		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), m_World);
+		m_Asteroids = new ArrayList<Asteroid>();
 
-		m_Handler = new InputHandler(m_GameData.getShip());
+		m_Handler = new InputHandler(m_Ship);
 		try
 		{
 			m_Server = new RmiServer(m_GameData, m_Handler);
@@ -77,14 +83,16 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_SpriteBatch.begin();
 		m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
 		m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
-		for(BaseEntity be: m_GameData.getAsteroids())
+		for(Asteroid be: m_Asteroids)
 			be.draw(m_SpriteBatch);
-		m_GameData.getShip().draw(m_SpriteBatch);
+		m_Ship.draw(m_SpriteBatch);
 		m_SpriteBatch.end();
 
-		for(BaseEntity be: m_GameData.getAsteroids())
+		for(Asteroid be: m_Asteroids)
 			be.update(delta);
-		m_GameData.getShip().update(delta);
+		m_Ship.update(delta);
+		m_GameData.updateShipData(m_Ship);
+		m_GameData.updateAsteroidData(m_Asteroids);
 		m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
 	}
 
@@ -140,7 +148,7 @@ public class AsteroidEngine implements Screen, ContactListener
 			if (m_GameData.takeLife())
 			{
 				// Game over
-				m_GameData.reset(m_World);
+				m_GameData.reset();
 			}
 		}
 		// Check for Asteroid/Bullet collision

@@ -9,6 +9,8 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.util.TextureWrapper;
 
+import java.io.Serializable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Luke

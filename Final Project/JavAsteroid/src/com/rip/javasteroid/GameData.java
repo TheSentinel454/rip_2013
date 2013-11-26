@@ -99,4 +99,20 @@ public class GameData implements Serializable
 		m_Lives--;
 		return (m_Lives == 0);
 	}
+
+    /**
+     * Get the ship data
+     * @return ship data
+     */
+    public EntityData getShipData() {
+        return m_ShipData;
+    }
+
+    /**
+     * Get the asteroid data
+     * @return asteroid data
+     */
+    public ArrayList<EntityData> getAsteroidData() {
+        return m_AsteroidData;
+    }
 }

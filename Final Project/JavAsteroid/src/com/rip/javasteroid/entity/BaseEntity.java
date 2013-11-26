@@ -29,6 +29,11 @@ public abstract class BaseEntity
 		return m_Body;
 	}
 
+	public float getRadius()
+	{
+		return m_Radius;
+	}
+
 	/**
 	 * Base Entity constructor
 	 * @param pos - Position of the entity

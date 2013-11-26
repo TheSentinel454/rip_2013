@@ -17,6 +17,17 @@ public class EntityData implements Serializable
 	private Vector2 m_Position;
 	private Vector2 m_Velocity;
 	private float m_Angle;
+	private float m_Radius;
+
+	public float getRadius()
+	{
+		return m_Radius;
+	}
+
+	public void setRadius(float radius)
+	{
+		this.m_Radius = radius;
+	}
 
 	public Vector2 getPosition()
 	{
@@ -62,11 +73,12 @@ public class EntityData implements Serializable
 	 * @param vel - Velocity
 	 * @param angle - Angle
 	 */
-	public EntityData(Vector2 pos, Vector2 vel, float angle)
+	public EntityData(Vector2 pos, Vector2 vel, float angle, float radius)
 	{
 		m_Position = pos;
 		m_Velocity = vel;
 		m_Angle = angle;
+		m_Radius = radius;
 	}
 
 	/**
@@ -78,6 +90,7 @@ public class EntityData implements Serializable
 		this.m_Position = entity.getBody().getPosition();
 		this.m_Velocity = entity.getBody().getLinearVelocity();
 		this.m_Angle = entity.getBody().getAngle();
+		this.m_Radius = entity.getRadius();
 	}
 
 	/**
@@ -87,6 +100,6 @@ public class EntityData implements Serializable
 	 */
 	public static EntityData fromBaseEntity(BaseEntity entity)
 	{
-		return new EntityData(entity.getBody().getPosition(), entity.getBody().getLinearVelocity(), entity.getBody().getAngle());
+		return new EntityData(entity.getBody().getPosition(), entity.getBody().getLinearVelocity(), entity.getBody().getAngle(), entity.getRadius());
 	}
 }

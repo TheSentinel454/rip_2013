@@ -2,16 +2,12 @@ package com.rip.javasteroid.remote;
 
 import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.engine.InputHandler;
-import com.rip.javasteroid.entity.BaseEntity;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.

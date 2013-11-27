@@ -6,7 +6,11 @@ import com.rip.javasteroid.engine.AsteroidEngine;
 
 public class JavAsteroid extends Game
 {
-	private Screen m_AsteroidGame;
+	public static AsteroidEngine m_AsteroidGame;
+	public static AsteroidEngine getEngine()
+	{
+		return m_AsteroidGame;
+	}
 
 	@Override
 	public void create()

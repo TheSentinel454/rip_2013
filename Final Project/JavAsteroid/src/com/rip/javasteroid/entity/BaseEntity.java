@@ -144,4 +144,9 @@ public abstract class BaseEntity
 	{
 		m_Texture = texture;
 	}
+
+	/**
+	 * Destroy method to do any cleanup
+	 */
+	public abstract void destroy();
 }

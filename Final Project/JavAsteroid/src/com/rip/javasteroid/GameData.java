@@ -20,6 +20,7 @@ public class GameData implements Serializable
 {
 	/* Private Attributes */
 	private int m_Score = 0;
+	private Object m_ScoreLock = new Object();
 	private int m_Lives = 3;
 	private EntityData m_ShipData;
 	private ArrayList<EntityData> m_AsteroidData;
@@ -60,7 +61,22 @@ public class GameData implements Serializable
 	 */
 	public int getScore()
 	{
-		return m_Score;
+		synchronized (m_ScoreLock)
+		{
+			return m_Score;
+		}
+	}
+
+	/**
+	 * Add to the score
+	 * @param points - Points to add to the score
+	 */
+	public void addScore(int points)
+	{
+		synchronized (m_ScoreLock)
+		{
+			m_Score += points;
+		}
 	}
 
 	/**

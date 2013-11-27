@@ -14,7 +14,7 @@ public class Bullet extends BaseEntity
 {
 	/* Constants */
 	public static final float BULLET_VELOCITY 	= 500.0f;
-	private static final float LIFE_TIME 		= 2.0f;	// 2 seconds
+	private static final float LIFE_TIME 		= 3.0f;	// 3 seconds
 	private static final float BULLET_RADIUS 	= 1.5f;
 
 	/* Private Attributes */
@@ -31,12 +31,10 @@ public class Bullet extends BaseEntity
 	{
 		super(pos, world, BodyDef.BodyType.KinematicBody);
 		// Create the fixture
-		makeCircleFixture(BULLET_RADIUS, 0.0f, 0.0f);
+		makeCircleFixture(BULLET_RADIUS, 1.0f, 1.0f);
 		// Set initial velocities
 		m_Body.setLinearVelocity(vel);
 		m_Body.setAngularVelocity(0.0f);
-		// Load the default texture
-		//loadTexture("data/bullet.png");
 	}
 
 	/**
@@ -59,12 +57,17 @@ public class Bullet extends BaseEntity
 		m_Life += dt;
 		// Check to see if the bullet dead
 		if (m_Life >= LIFE_TIME)
-		{
 			// Mark the bullet as dead
 			m_Dead = true;
-		}
 		// Call the base update
 		super.update(dt);
+	}
+
+	@Override
+	public void destroy()
+	{
+		// Mark the bullet as dead
+		m_Dead = true;
 	}
 
 	public void dispose()

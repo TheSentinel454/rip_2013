@@ -6,9 +6,12 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
+import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.util.TextureWrapper;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,7 +28,7 @@ public class Ship extends BaseEntity
 	private static final float SHIP_LINEAR_ACCELERATION = 125.0f;
 	private static final float SHIP_MAX_LINEAR_VELOCITY = 60.0f;
 	private static final float SHIP_DRAG_COEFFICIENT = 0.0f;
-	private static final float FIRE_COOLDOWN = 0.25f;
+	private static final float FIRE_COOLDOWN = 0.15f;
 	private static final float SHIP_ANGULAR_VELOCITY = 1.5f;
 
 	public void setMoving(boolean moving)
@@ -41,6 +44,10 @@ public class Ship extends BaseEntity
 	{
 		this.m_RotatingRight = rotatingRight;
 	}
+	public boolean isActive()
+	{
+		return m_Active;
+	}
 
 	private World 				m_World;
 	private boolean				m_Moving		= false;
@@ -50,6 +57,7 @@ public class Ship extends BaseEntity
 	private ArrayList<Bullet>	m_Bullets		= new ArrayList<Bullet>();
 	private boolean				m_AbleToShoot	= true;
 	private float				m_Cooldown		= FIRE_COOLDOWN;
+	private boolean 			m_Active		= true;
 
 	private TextureWrapper		m_MoveTexture;
 	private TextureWrapper		m_StopTexture;
@@ -174,15 +182,15 @@ public class Ship extends BaseEntity
 	 */
 	private void updateCooldown(float dt)
 	{
-		// See if we need to update cooldown info
+		// See if we need to update cool down info
 		if (!m_AbleToShoot)
 		{
-			// Decrease the cooldown timer
+			// Decrease the cool down timer
 			m_Cooldown -= dt;
-			// Check to see if cooldown is complete
+			// Check to see if cool down is complete
 			if (m_Cooldown < 0)
 			{
-				// Reset the cooldown and set the flag
+				// Reset the cool down and set the flag
 				m_Cooldown = FIRE_COOLDOWN;
 				m_AbleToShoot = true;
 			}
@@ -208,6 +216,45 @@ public class Ship extends BaseEntity
 			// Start cool down
 			m_AbleToShoot = false;
 			m_Cooldown = FIRE_COOLDOWN;
+		}
+	}
+
+	/**
+	 * Destroy the ship
+	 */
+	@Override
+	public void destroy()
+	{
+		try
+		{
+			// Set to inactive
+			m_Active = false;
+			// Start active timer (3 seconds)
+			Timer timer = new Timer();
+			timer.schedule(new TimerTask()
+			{
+				@Override
+				public void run()
+				{
+					m_Active = true;
+				}
+			}, 3*1000);
+			// Set the location back to the center
+			m_Body.setTransform(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), 0.0f);
+			// Reset the firing flags
+			m_AbleToShoot = true;
+			m_Cooldown = 0.0f;
+			// Reset the velocities
+			m_Body.setLinearVelocity(0.0f,0.0f);
+			m_Body.setAngularVelocity(0.0f);
+			// Reset movement flags
+			m_Moving = false;
+			m_RotatingLeft = false;
+			m_RotatingRight = false;
+		}
+		catch (Exception e)
+		{
+			System.out.println("Exception: " + e.getMessage());
 		}
 	}
 }

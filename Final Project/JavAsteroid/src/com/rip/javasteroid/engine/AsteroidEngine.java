@@ -15,7 +15,8 @@ import com.rip.javasteroid.entity.Bullet;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.RmiServer;
 
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,7 +31,7 @@ public class AsteroidEngine implements Screen, ContactListener
 	public static final int		WIDTH					= 640;
 	public static final int		LARGE_ASTEROID_POINTS	= 20;
 	public static final int		MEDIUM_ASTEROID_POINTS	= 50;
-	public static final int		SMALL_ASTEROID_POINT	= 100;
+	public static final int		SMALL_ASTEROID_POINTS	= 100;
 	private static final float	BOX_STEP				= 1/60f;
 	private static final int	BOX_VELOCITY_ITERATIONS	= 6;
 	private static final int	BOX_POSITION_ITERATIONS	= 2;
@@ -45,7 +46,10 @@ public class AsteroidEngine implements Screen, ContactListener
 	private GameData			m_GameData;
 	private BitmapFont			m_Font;
 	private Ship				m_Ship;
-	private ArrayList<Asteroid> m_Asteroids;
+	private ArrayList<Asteroid>	m_Asteroids;
+	private Object 				m_CollisionQueueLock = new Object();
+	private ConcurrentLinkedQueue<BaseEntity> m_CollisionQueue = new ConcurrentLinkedQueue<BaseEntity>();
+	private boolean				newAsteroid = false;
 
 	public AsteroidEngine()
 	{
@@ -61,6 +65,24 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_World.setContactListener(this);
 		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), m_World);
 		m_Asteroids = new ArrayList<Asteroid>();
+
+		// Generate a few asteroids to start the game
+		generateNewAsteroid();
+		generateNewAsteroid();
+		generateNewAsteroid();
+		generateNewAsteroid();
+
+		// Start schedule to randomly add new ones
+		Timer timer = new Timer();
+		timer.scheduleAtFixedRate(new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				// Add a new asteroid
+				newAsteroid = true;
+			}
+		}, 5 * 1000, 5 * 1000);
 
 		m_Handler = new InputHandler(m_Ship);
 		try
@@ -94,6 +116,42 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_GameData.updateShipData(m_Ship);
 		m_GameData.updateAsteroidData(m_Asteroids);
 		m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
+
+		// Handle any Asteroid collisions
+		synchronized (m_CollisionQueueLock)
+		{
+			BaseEntity entity;
+			while ((entity = m_CollisionQueue.poll()) != null)
+			{
+				if (entity instanceof Asteroid)
+					destroyAsteroid((Asteroid)entity);
+				else if (entity instanceof Ship)
+				{
+					// Take a life
+					if (m_GameData.takeLife())
+					{
+						// Game over
+						m_GameData.reset();
+						// Reset game
+						resetGame();
+						// Just kill the game for right now
+						// need to do something slightly different later..
+						System.exit(0);
+					}
+					entity.destroy();
+				}
+				else if (entity instanceof Bullet)
+					entity.destroy();
+			}
+		}
+		// See if we need to create another asteroid
+		if (newAsteroid)
+		{
+			// Generate a new asteroid
+			generateNewAsteroid();
+			// Flip the flag again
+			newAsteroid = false;
+		}
 	}
 
 	@Override
@@ -142,13 +200,16 @@ public class AsteroidEngine implements Screen, ContactListener
 			(contact.getFixtureB().getBody().getUserData() instanceof Ship &&
 			contact.getFixtureA().getBody().getUserData() instanceof Asteroid))
 		{
-			// Ship collided with an Asteroid
-			System.out.println("Ship collision!");
-			// Take a life
-			if (m_GameData.takeLife())
+			// Make sure the ship is active
+			if (m_Ship.isActive())
 			{
-				// Game over
-				m_GameData.reset();
+				// Ship collided with an Asteroid
+				System.out.println("Ship collision!");
+				synchronized (m_CollisionQueueLock)
+				{
+					m_CollisionQueue.add((BaseEntity)contact.getFixtureA().getBody().getUserData());
+					m_CollisionQueue.add((BaseEntity)contact.getFixtureB().getBody().getUserData());
+				}
 			}
 		}
 		// Check for Asteroid/Bullet collision
@@ -159,7 +220,59 @@ public class AsteroidEngine implements Screen, ContactListener
 		{
 			// Bullet collided with an Asteroid
 			System.out.println("Bullet collision!");
+			synchronized (m_CollisionQueueLock)
+			{
+				m_CollisionQueue.add((BaseEntity)contact.getFixtureA().getBody().getUserData());
+				m_CollisionQueue.add((BaseEntity)contact.getFixtureB().getBody().getUserData());
+			}
 		}
+	}
+
+	/**
+	 * Reset the game
+	 */
+	private void resetGame()
+	{
+
+	}
+
+	/**
+	 * Destroy an asteroid
+	 * @param asteroid - Asteroid to destroy
+	 */
+	private void destroyAsteroid(Asteroid asteroid)
+	{
+		m_GameData.addScore(asteroid.getValue());
+		removeAsteroid(asteroid);
+		asteroid.destroy();
+	}
+
+	/**
+	 * Remove an asteroid from the world
+	 * @param asteroid - Asteroid to be removed from the world
+	 */
+	private void removeAsteroid(Asteroid asteroid)
+	{
+		// Sift through the Asteroids
+		for(int i = 0; i < m_Asteroids.size(); i++)
+		{
+			// Check the IDs to see if they match
+			if (m_Asteroids.get(i).getID() == asteroid.getID())
+			{
+				// Remove the asteroid
+				m_Asteroids.remove(i);
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Add an asteroid to the list
+	 * @param asteroid - Asteroid to add to the list
+	 */
+	public void addAsteroid(Asteroid asteroid)
+	{
+		m_Asteroids.add(asteroid);
 	}
 
 	@Override
@@ -178,5 +291,48 @@ public class AsteroidEngine implements Screen, ContactListener
 	public void postSolve(Contact contact, ContactImpulse impulse)
 	{
 		// Don't need this...
+	}
+
+	/**
+	 * Generate and add a new asteroid
+	 */
+	private void generateNewAsteroid()
+	{
+		// Randomly select an edge
+		int edge = new Random().nextInt(4);
+		float x = 0.0f, y = 0.0f;
+		switch(edge)
+		{
+			// TOP
+			case 0:
+				// Randomize X
+				x = (int)(Math.random() * AsteroidEngine.WIDTH);
+				// y = MAX
+				y = AsteroidEngine.HEIGHT;
+				break;
+			// BOTTOM
+			case 1:
+				// Randomize X
+				x = (int)(Math.random() * AsteroidEngine.WIDTH);
+				// y = MIN
+				y = 0;
+				break;
+			// LEFT
+			case 2:
+				// Randomize Y
+				y = (int)(Math.random() * AsteroidEngine.HEIGHT);
+				// x = MIN
+				x = 0;
+				break;
+			// RIGHT
+			case 3:
+				// Randomize Y
+				y = (int)(Math.random() * AsteroidEngine.HEIGHT);
+				// x = MAX
+				x = AsteroidEngine.WIDTH;
+				break;
+		}
+		// Create and add the new asteroid
+		m_Asteroids.add(new Asteroid(new Vector2(x, y), Asteroid.AsteroidSize.Large, m_World));
 	}
 }

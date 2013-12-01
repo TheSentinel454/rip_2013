@@ -23,9 +23,9 @@ public class Bullet extends BaseEntity
 
 	/**
 	 * Bullet Constructor
-	 * @param pos
-	 * @param vel
-	 * @param world
+	 * @param pos - Position
+	 * @param vel - Velocity
+	 * @param world - World to create the bullet in
 	 */
 	public Bullet(Vector2 pos, Vector2 vel, World world)
 	{
@@ -35,6 +35,8 @@ public class Bullet extends BaseEntity
 		// Set initial velocities
 		m_Body.setLinearVelocity(vel);
 		m_Body.setAngularVelocity(0.0f);
+		// Load the image
+		loadTexture("data/Bullet.png");
 	}
 
 	/**

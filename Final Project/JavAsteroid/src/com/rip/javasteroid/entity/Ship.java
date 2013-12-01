@@ -2,7 +2,7 @@ package com.rip.javasteroid.entity;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
@@ -34,7 +34,7 @@ public class Ship extends BaseEntity
 	public void setMoving(boolean moving)
 	{
 		this.m_Moving = moving;
-		this.m_Texture = (moving ? m_MoveTexture : m_StopTexture);
+		setTexture(moving ? m_MoveTexture : m_StopTexture);
 	}
 	public void setRotatingLeft(boolean rotatingLeft)
 	{
@@ -53,7 +53,6 @@ public class Ship extends BaseEntity
 	private boolean				m_Moving		= false;
 	private boolean				m_RotatingLeft	= false;
 	private boolean				m_RotatingRight	= false;
-	private float				m_Velocity		= 0.0f;
 	private ArrayList<Bullet>	m_Bullets		= new ArrayList<Bullet>();
 	private boolean				m_AbleToShoot	= true;
 	private float				m_Cooldown		= FIRE_COOLDOWN;
@@ -91,7 +90,7 @@ public class Ship extends BaseEntity
 	public void update(float dt)
 	{
 		// Update the Angular velocity
-		updateAngularVelocity(dt);
+		updateAngularVelocity();
 		// Update the Linear velocity
 		updateLinearVelocity(dt);
 		// Update the bullets
@@ -102,6 +101,19 @@ public class Ship extends BaseEntity
 		super.update(dt);
 	}
 
+	@Override
+	public void draw(SpriteBatch sp)
+	{
+		// Draw the bullets
+		for(Bullet bullet: m_Bullets)
+			bullet.draw(sp);
+		// Draw the texture differently if we are not active
+		if (!m_Active)
+			m_Texture.draw(sp, 0.5f);
+		else
+			super.draw(sp);
+	}
+
 	/**
 	 * Update the ship's linear velocity
 	 * @param dt - Delta Time
@@ -110,12 +122,12 @@ public class Ship extends BaseEntity
 	{
 		// Pull the current velocity
 		Vector2 velocity = m_Body.getLinearVelocity();
-		m_Velocity = velocity.len();
+		float velocityMagnitude = velocity.len();
 
 		// Apply drag on ship proportional to current velocity squared and opposite current direction of motion
 		Vector2 dragV = new Vector2(velocity);
 		dragV.nor();
-		dragV.scl(-1* SHIP_DRAG_COEFFICIENT * m_Velocity * m_Velocity * dt);
+		dragV.scl(-1* SHIP_DRAG_COEFFICIENT * velocityMagnitude * velocityMagnitude * dt);
 		velocity.add(dragV);
 
 		// If moving (based on keyboard input), apply change in velocity in line with ship body axis
@@ -140,9 +152,8 @@ public class Ship extends BaseEntity
 
 	/**
 	 * Update the ship's angular velocity
-	 * @param dt - Delta Time
 	 */
-	private void updateAngularVelocity(float dt)
+	private void updateAngularVelocity()
 	{
 		// Update the velocity based on the flags
 		if (m_RotatingLeft && !m_RotatingRight)

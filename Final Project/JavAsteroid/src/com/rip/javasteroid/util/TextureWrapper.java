@@ -1,8 +1,8 @@
 package com.rip.javasteroid.util;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -76,5 +76,15 @@ public class TextureWrapper
 		sp.draw(m_Texture, m_Position.x - m_Width / 2, m_Position.y - m_Height / 2,
 				m_OriginX, m_OriginY, m_Width, m_Height,
 				m_ScaleX, m_ScaleY, m_Rotation, 0, 0, m_Width, m_Height, false, false);
+	}
+
+	public void draw(SpriteBatch sp, float alpha)
+	{
+		Color c = sp.getColor();
+		sp.setColor(c.r, c.g, c.b, alpha);
+		sp.draw(m_Texture, m_Position.x - m_Width / 2, m_Position.y - m_Height / 2,
+				m_OriginX, m_OriginY, m_Width, m_Height,
+				m_ScaleX, m_ScaleY, m_Rotation, 0, 0, m_Width, m_Height, false, false);
+		sp.setColor(c.r, c.g, c.b, c.a);
 	}
 }

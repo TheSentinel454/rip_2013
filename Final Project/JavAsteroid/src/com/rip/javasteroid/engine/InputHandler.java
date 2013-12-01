@@ -2,6 +2,7 @@ package com.rip.javasteroid.engine;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.rip.javasteroid.JavAsteroid;
 import com.rip.javasteroid.entity.Ship;
 
 /**
@@ -27,31 +28,48 @@ public class InputHandler implements InputProcessor
 
 	public void startForward()
 	{
-		m_Ship.setMoving(true);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setMoving(true);
 	}
 	public void stopForward()
 	{
-		m_Ship.setMoving(false);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setMoving(false);
 	}
 	public void startRight()
 	{
-		m_Ship.setRotatingRight(true);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setRotatingRight(true);
 	}
 	public void stopRight()
 	{
-		m_Ship.setRotatingRight(false);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setRotatingRight(false);
 	}
 	public void startLeft()
 	{
-		m_Ship.setRotatingLeft(true);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setRotatingLeft(true);
 	}
 	public void stopLeft()
 	{
-		m_Ship.setRotatingLeft(false);
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.setRotatingLeft(false);
 	}
 	public void fire()
 	{
-		m_Ship.fire();
+		if (!JavAsteroid.getEngine().isGameOver())
+			m_Ship.fire();
+	}
+	public void reset()
+	{
+		// Reset the game
+		JavAsteroid.getEngine().resetGame();
+	}
+	public void exit()
+	{
+		// Kill the application
+		System.exit(0);
 	}
 
 	@Override
@@ -70,6 +88,13 @@ public class InputHandler implements InputProcessor
 				break;
 			case Input.Keys.LEFT:
 				startLeft();
+				break;
+			case Input.Keys.R:
+				reset();
+				break;
+			case Input.Keys.Q:
+			case Input.Keys.ESCAPE:
+				exit();
 				break;
 		}
 		return true;

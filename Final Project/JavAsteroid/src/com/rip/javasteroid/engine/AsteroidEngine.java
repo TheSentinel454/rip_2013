@@ -36,7 +36,7 @@ public class AsteroidEngine implements Screen, ContactListener
 	private static final int	BOX_VELOCITY_ITERATIONS	= 6;
 	private static final int	BOX_POSITION_ITERATIONS	= 2;
 
-
+	/* Private Attributes */
 	private OrthographicCamera	m_Camera;
 	private World				m_World;
 	private SpriteBatch			m_SpriteBatch;
@@ -47,9 +47,11 @@ public class AsteroidEngine implements Screen, ContactListener
 	private BitmapFont			m_Font;
 	private Ship				m_Ship;
 	private ArrayList<Asteroid>	m_Asteroids;
-	private Object 				m_CollisionQueueLock = new Object();
+	private final Object 		m_CollisionQueueLock = new Object();
 	private ConcurrentLinkedQueue<BaseEntity> m_CollisionQueue = new ConcurrentLinkedQueue<BaseEntity>();
-	private boolean				newAsteroid = false;
+	private Timer				m_Timer;
+	private boolean				m_NewAsteroid = false;
+	private boolean				m_GameOver = false;
 
 	public AsteroidEngine()
 	{
@@ -65,6 +67,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_World.setContactListener(this);
 		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), m_World);
 		m_Asteroids = new ArrayList<Asteroid>();
+		m_GameOver = true;
 
 		// Generate a few asteroids to start the game
 		generateNewAsteroid();
@@ -73,16 +76,16 @@ public class AsteroidEngine implements Screen, ContactListener
 		generateNewAsteroid();
 
 		// Start schedule to randomly add new ones
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask()
+		m_Timer = new Timer();
+		m_Timer.scheduleAtFixedRate(new TimerTask()
 		{
 			@Override
 			public void run()
 			{
 				// Add a new asteroid
-				newAsteroid = true;
+				m_NewAsteroid = true;
 			}
-		}, 5 * 1000, 5 * 1000);
+		}, 5 * 1000, 5 * 1000); // 5 second timer for asteroid creation
 
 		m_Handler = new InputHandler(m_Ship);
 		try
@@ -101,13 +104,15 @@ public class AsteroidEngine implements Screen, ContactListener
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		m_DebugRenderer.render(m_World, m_Camera.combined);
+		//m_DebugRenderer.render(m_World, m_Camera.combined);
 		m_SpriteBatch.begin();
 		m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
 		m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
 		for(Asteroid be: m_Asteroids)
 			be.draw(m_SpriteBatch);
 		m_Ship.draw(m_SpriteBatch);
+		if (m_GameOver)
+			m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
 		m_SpriteBatch.end();
 
 		for(Asteroid be: m_Asteroids)
@@ -129,15 +134,8 @@ public class AsteroidEngine implements Screen, ContactListener
 				{
 					// Take a life
 					if (m_GameData.takeLife())
-					{
 						// Game over
-						m_GameData.reset();
-						// Reset game
-						resetGame();
-						// Just kill the game for right now
-						// need to do something slightly different later..
-						System.exit(0);
-					}
+						m_GameOver = true;
 					entity.destroy();
 				}
 				else if (entity instanceof Bullet)
@@ -145,12 +143,12 @@ public class AsteroidEngine implements Screen, ContactListener
 			}
 		}
 		// See if we need to create another asteroid
-		if (newAsteroid)
+		if (m_NewAsteroid)
 		{
 			// Generate a new asteroid
 			generateNewAsteroid();
 			// Flip the flag again
-			newAsteroid = false;
+			m_NewAsteroid = false;
 		}
 	}
 
@@ -194,6 +192,8 @@ public class AsteroidEngine implements Screen, ContactListener
 	@Override
 	public void beginContact(Contact contact)
 	{
+		// Don't bother if the game is over
+		if (m_GameOver) return;
 		// Check for Asteroid/Ship collision
 		if((contact.getFixtureA().getBody().getUserData() instanceof Ship &&
 			contact.getFixtureB().getBody().getUserData() instanceof Asteroid) ||
@@ -226,14 +226,6 @@ public class AsteroidEngine implements Screen, ContactListener
 				m_CollisionQueue.add((BaseEntity)contact.getFixtureB().getBody().getUserData());
 			}
 		}
-	}
-
-	/**
-	 * Reset the game
-	 */
-	private void resetGame()
-	{
-
 	}
 
 	/**
@@ -275,22 +267,31 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Asteroids.add(asteroid);
 	}
 
-	@Override
-	public void endContact(Contact contact)
+	/**
+	 * Reset the game
+	 */
+	public void resetGame()
 	{
-		// Don't need this...
-	}
+		// Make sure the game is over
+		if (m_GameOver)
+		{
+			// Clear the Asteroids
+			for(Asteroid asteroid: m_Asteroids)
+				m_World.destroyBody(asteroid.getBody());
+			m_Asteroids.clear();
 
-	@Override
-	public void preSolve(Contact contact, Manifold oldManifold)
-	{
-		// Don't need this...
-	}
+			// Generate the starting asteroids
+			generateNewAsteroid();
+			generateNewAsteroid();
+			generateNewAsteroid();
+			generateNewAsteroid();
 
-	@Override
-	public void postSolve(Contact contact, ContactImpulse impulse)
-	{
-		// Don't need this...
+			// Reset the game data
+			m_GameData.reset();
+
+			// Reset the flag
+			m_GameOver = false;
+		}
 	}
 
 	/**
@@ -334,5 +335,32 @@ public class AsteroidEngine implements Screen, ContactListener
 		}
 		// Create and add the new asteroid
 		m_Asteroids.add(new Asteroid(new Vector2(x, y), Asteroid.AsteroidSize.Large, m_World));
+	}
+
+	/**
+	 * Is the game over?
+	 * @return True if the Game is over, False otherwise.
+	 */
+	public boolean isGameOver()
+	{
+		return m_GameOver;
+	}
+
+	@Override
+	public void endContact(Contact contact)
+	{
+		// Don't need this...
+	}
+
+	@Override
+	public void preSolve(Contact contact, Manifold oldManifold)
+	{
+		// Don't need this...
+	}
+
+	@Override
+	public void postSolve(Contact contact, ContactImpulse impulse)
+	{
+		// Don't need this...
 	}
 }

@@ -23,4 +23,6 @@ public interface QueryInterface extends Remote
 	void startLeft() throws RemoteException;
 	void stopLeft() throws RemoteException;
 	void fire() throws RemoteException;
+	void reset() throws RemoteException;
+	void quit() throws RemoteException;
 }

@@ -74,6 +74,18 @@ public class RmiServer extends UnicastRemoteObject implements QueryInterface
 		m_Handler.fire();
 	}
 
+	@Override
+	public void reset() throws RemoteException
+	{
+		m_Handler.reset();
+	}
+
+	@Override
+	public void quit() throws RemoteException
+	{
+		m_Handler.exit();
+	}
+
 	/**
 	 * Initialize the RMI Server to allow for querying of
 	 * Game data from a remote process

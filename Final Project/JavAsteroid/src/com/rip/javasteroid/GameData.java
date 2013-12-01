@@ -1,8 +1,5 @@
 package com.rip.javasteroid;
 
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.World;
-import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.entity.Asteroid;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
@@ -19,9 +16,8 @@ import java.util.ArrayList;
 public class GameData implements Serializable
 {
 	/* Private Attributes */
-	private int m_Score = 0;
-	private Object m_ScoreLock = new Object();
-	private int m_Lives = 3;
+	private Integer m_Score = 0;
+	private Integer m_Lives = 3;
 	private EntityData m_ShipData;
 	private ArrayList<EntityData> m_AsteroidData;
 
@@ -31,19 +27,25 @@ public class GameData implements Serializable
 	 */
 	public void updateShipData(Ship ship)
 	{
-		// Update the ship data
-		m_ShipData.update(ship);
+		synchronized (m_ShipData)
+		{
+			// Update the ship data
+			m_ShipData.update(ship);
+		}
 	}
 
 	/**
 	 * Update the Asteroid data
-	 * @param asteroids
+	 * @param asteroids - Asteroids to update with
 	 */
 	public void updateAsteroidData(ArrayList<Asteroid> asteroids)
 	{
-		m_AsteroidData.clear();
-		for(Asteroid asteroid: asteroids)
-			m_AsteroidData.add(EntityData.fromBaseEntity(asteroid));
+		synchronized (m_AsteroidData)
+		{
+			m_AsteroidData.clear();
+			for(Asteroid asteroid: asteroids)
+				m_AsteroidData.add(EntityData.fromBaseEntity(asteroid));
+		}
 	}
 
 	/**
@@ -52,7 +54,10 @@ public class GameData implements Serializable
 	 */
 	public int getLives()
 	{
-		return m_Lives;
+		synchronized (m_Score)
+		{
+			return m_Lives;
+		}
 	}
 
 	/**
@@ -61,7 +66,7 @@ public class GameData implements Serializable
 	 */
 	public int getScore()
 	{
-		synchronized (m_ScoreLock)
+		synchronized (m_Score)
 		{
 			return m_Score;
 		}
@@ -73,7 +78,7 @@ public class GameData implements Serializable
 	 */
 	public void addScore(int points)
 	{
-		synchronized (m_ScoreLock)
+		synchronized (m_Score)
 		{
 			m_Score += points;
 		}
@@ -112,23 +117,34 @@ public class GameData implements Serializable
 	 */
 	public boolean takeLife()
 	{
-		m_Lives--;
-		return (m_Lives == 0);
+		synchronized (m_Lives)
+		{
+			m_Lives--;
+			return (m_Lives == 0);
+		}
 	}
 
     /**
      * Get the ship data
      * @return ship data
      */
-    public EntityData getShipData() {
-        return m_ShipData;
-    }
+    public EntityData getShipData()
+	{
+		synchronized (m_ShipData)
+		{
+			return m_ShipData;
+		}
+	}
 
     /**
      * Get the asteroid data
      * @return asteroid data
      */
-    public ArrayList<EntityData> getAsteroidData() {
-        return m_AsteroidData;
-    }
+	public ArrayList<EntityData> getAsteroidData()
+	{
+		synchronized (m_AsteroidData)
+		{
+			return m_AsteroidData;
+		}
+	}
 }

@@ -22,14 +22,14 @@ import java.util.TimerTask;
 public class Ship extends BaseEntity
 {
 	/* Constants */
-	private static final float SHIP_DENSITY = 1.0f;
-	private static final float SHIP_RESTITUTION = 0.3f;
-	private static final float SHIP_RADIUS = 27.0f / 2;
-	private static final float SHIP_LINEAR_ACCELERATION = 125.0f;
-	private static final float SHIP_MAX_LINEAR_VELOCITY = 60.0f;
-	private static final float SHIP_DRAG_COEFFICIENT = 0.0f;
-	private static final float FIRE_COOLDOWN = 0.15f;
-	private static final float SHIP_ANGULAR_VELOCITY = 1.5f;
+	public static final float SHIP_DENSITY = 1.0f;
+	public static final float SHIP_RESTITUTION = 0.3f;
+	public static final float SHIP_RADIUS = 27.0f / 2;
+	public static final float SHIP_LINEAR_ACCELERATION = 125.0f;
+	public static final float SHIP_MAX_LINEAR_VELOCITY = 60.0f;
+	public static final float SHIP_DRAG_COEFFICIENT = 0.0f;
+	public static final float FIRE_COOLDOWN = 0.15f;
+	public static final float SHIP_ANGULAR_VELOCITY = 1.5f;
 
 	public void setMoving(boolean moving)
 	{

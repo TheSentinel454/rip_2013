@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class GameData implements Serializable
 {
 	/* Private Attributes */
+	private Boolean m_GameOver = false;
 	private Integer m_Score = 0;
 	private Integer m_Lives = 3;
 	private EntityData m_ShipData;
@@ -49,6 +50,18 @@ public class GameData implements Serializable
 	}
 
 	/**
+	 * Update the current game state
+	 * @param gameOver - True if the game is over, False otherwise
+	 */
+	public void updateGameState(boolean gameOver)
+	{
+		synchronized (m_GameOver)
+		{
+			m_GameOver = gameOver;
+		}
+	}
+
+	/**
 	 * Get the current life count
 	 * @return Life count
 	 */
@@ -69,6 +82,18 @@ public class GameData implements Serializable
 		synchronized (m_Score)
 		{
 			return m_Score;
+		}
+	}
+
+	/**
+	 * Is the game over?
+	 * @return True if the game is over, False otherwise
+	 */
+	public boolean isGameOver()
+	{
+		synchronized (m_GameOver)
+		{
+			return m_GameOver;
 		}
 	}
 

@@ -15,13 +15,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Main
 {
 	/* Constants */
+	private static final int GAMES_TO_PLAY = 2000;
 	private static final float SAFE_DISTANCE =  600.0f;
 	private static final float SAFETY_FACTOR = 0.05f;
 
 	/* Private Attributes */
-	private static QueryInterface m_Server;
-	private static PlanExecutor m_Executor;
-	private static Vector2 m_Goal;
+	private static QueryInterface	m_Server;
+	private static PlanExecutor		m_Executor;
+	private static GameData			m_GameData;
+	private static Vector2			m_Goal;
 
 	/**
 	 * Main entry point for the application
@@ -38,13 +40,39 @@ public class Main
 			// Start the plan executor
 			m_Executor.start();
 
-			boolean active = true;
+			int iGameCount = 0;
 			do
 			{
-				// Execute the planner and set the plan
-				m_Executor.setPlan(determinePlan());
+				try
+				{
+					// Update with the latest game data
+					m_GameData = m_Server.getGameData();
+					// Check to see if the game is over
+					if (m_GameData.isGameOver())
+					{
+						// TODO: Save out any relevant machine learning data
+						// TODO: Reset the planner
+						// TODO: Save out results (Score, etc.)
+						// Reset the game
+						m_Server.reset();
+						// Refresh the game data
+						m_GameData = m_Server.getGameData();
+						// Increment counter to know we just did another round
+						iGameCount++;
+						// Check counter to see if we have planned enough
+						if (iGameCount > GAMES_TO_PLAY)
+							// We are done planning
+							break;
+					}
+					// Execute the planner and set the plan
+					m_Executor.setPlan(determinePlan());
+				}
+				catch(Exception e)
+				{
+					System.out.println("Main Loop(): " + e.getMessage());
+				}
 			}
-			while(active);
+			while(true);
 
 			// Kill the plan executor
 			m_Executor.kill();
@@ -66,9 +94,8 @@ public class Main
 		ConcurrentLinkedQueue<PlanAction> plan = new ConcurrentLinkedQueue<PlanAction>();
 		try
 		{
-			GameData data = m_Server.getGameData();
-			EntityData ship = data.getShipData();
-			ArrayList<EntityData> asteroids = data.getAsteroidData();
+			EntityData ship = m_GameData.getShipData();
+			ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
 
 			Vector2 shippos = ship.getPosition();
 

@@ -120,6 +120,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Ship.update(delta);
 		m_GameData.updateShipData(m_Ship);
 		m_GameData.updateAsteroidData(m_Asteroids);
+		m_GameData.updateGameState(m_GameOver);
 		m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
 
 		// Handle any Asteroid collisions

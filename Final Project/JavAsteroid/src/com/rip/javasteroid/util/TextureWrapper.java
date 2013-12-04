@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class TextureWrapper
 {
+	/* Private Attributes */
 	private Texture         m_Texture;
 	private int             m_Width;
 	private int             m_Height;
@@ -24,9 +25,9 @@ public class TextureWrapper
 	private float           m_Rotation;
 
 	/**
-	 *
-	 * @param texture
-	 * @param pos
+	 * Texture wrapper constructor
+	 * @param texture - Texture to be used
+	 * @param pos - Initial position of the texture
 	 */
 	public TextureWrapper(Texture texture, Vector2 pos)
 	{
@@ -35,8 +36,8 @@ public class TextureWrapper
 	}
 
 	/**
-	 *
-	 * @param texture
+	 * Set the Texture to be used when drawing
+	 * @param texture - Texture to be used for drawing
 	 */
 	public void setTexture(Texture texture)
 	{
@@ -50,8 +51,8 @@ public class TextureWrapper
 	}
 
 	/**
-	 *
-	 * @param vector2
+	 * Set the position of the texture
+	 * @param vector2 - Position
 	 */
 	public void setPosition(Vector2 vector2)
 	{
@@ -59,8 +60,8 @@ public class TextureWrapper
 	}
 
 	/**
-	 *
-	 * @param r
+	 * Set the rotation of the texture
+	 * @param r - Rotation
 	 */
 	public void setRotation(float r)
 	{
@@ -68,8 +69,8 @@ public class TextureWrapper
 	}
 
 	/**
-	 *
-	 * @param sp
+	 * Draw the texture
+	 * @param sp - SpriteBatch to use for drawing
 	 */
 	public void draw(SpriteBatch sp)
 	{
@@ -78,6 +79,11 @@ public class TextureWrapper
 				m_ScaleX, m_ScaleY, m_Rotation, 0, 0, m_Width, m_Height, false, false);
 	}
 
+	/**
+	 * Draw the texture
+	 * @param sp - SpriteBatch to use for drawing
+	 * @param alpha - Alpha of the texture
+	 */
 	public void draw(SpriteBatch sp, float alpha)
 	{
 		Color c = sp.getColor();
@@ -86,5 +92,17 @@ public class TextureWrapper
 				m_OriginX, m_OriginY, m_Width, m_Height,
 				m_ScaleX, m_ScaleY, m_Rotation, 0, 0, m_Width, m_Height, false, false);
 		sp.setColor(c.r, c.g, c.b, c.a);
+	}
+
+	/**
+	 * Dispose any resources
+	 */
+	public void dispose()
+	{
+		if (m_Texture != null)
+		{
+			m_Texture.dispose();
+			m_Texture = null;
+		}
 	}
 }

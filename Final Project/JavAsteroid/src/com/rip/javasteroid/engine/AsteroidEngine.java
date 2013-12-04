@@ -67,7 +67,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_World.setContactListener(this);
 		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), m_World);
 		m_Asteroids = new ArrayList<Asteroid>();
-		m_GameOver = true;
+		m_GameOver = false;
 
 		// Generate a few asteroids to start the game
 		generateNewAsteroid();

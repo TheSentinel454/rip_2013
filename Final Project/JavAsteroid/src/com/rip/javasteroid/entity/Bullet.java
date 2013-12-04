@@ -74,6 +74,7 @@ public class Bullet extends BaseEntity
 
 	public void dispose()
 	{
-		System.out.println("Kill bullet");
+		if (m_Texture != null)
+			m_Texture.dispose();
 	}
 }

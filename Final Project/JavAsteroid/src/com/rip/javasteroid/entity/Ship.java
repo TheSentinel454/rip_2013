@@ -171,7 +171,7 @@ public class Ship extends BaseEntity
 	private void updateBullets(float dt)
 	{
 		// Iterate through the bullets and update
-		for(int i = m_Bullets.size() - 1; i > 0; i--)
+		for(int i = m_Bullets.size() - 1; i >= 0; i--)
 		{
 			// Update the bullet
 			m_Bullets.get(i).update(dt);

@@ -100,28 +100,20 @@ public class Main
 			Vector2 shippos = ship.getPosition();
 
 			//Calculate delta-V curve
-			int granularity = 1000;
-			float[] delta_theta = new float[2*granularity];
-			Vector2[] deltaV = new Vector2[2*granularity];
+			int granularity = 1000; //per semicircle
+			float[] delta_theta = new float[2*granularity+1];
+			Vector2[] deltaV = new Vector2[delta_theta.length];
+
+            //Determine time step to examine - currently time required to do 180 degree turn and accelerate to 25% of max velocity
 			float delta_t = (float)(Math.PI / Ship.SHIP_ANGULAR_VELOCITY + 0.25f * Ship.SHIP_MAX_LINEAR_VELOCITY / Ship.SHIP_LINEAR_ACCELERATION);
 
 			for(int ndx = 0; ndx < deltaV.length ; ndx++)
 			{
-				if(ndx < granularity)
-				{
-					delta_theta[ndx] = (float)(ndx * Math.PI / granularity);
-					deltaV[ndx] = new Vector2(1f,0f);
-					deltaV[ndx].setAngle(delta_theta[ndx]);
-					deltaV[ndx].scl(Ship.SHIP_LINEAR_ACCELERATION * (delta_t - delta_theta[ndx] / Ship.SHIP_ANGULAR_VELOCITY));
-				}
-				else
-				{
-					delta_theta[ndx] = (float)((ndx-granularity) * -1 * Math.PI / granularity);
-					deltaV[ndx] = new Vector2(1f,0f);
-					deltaV[ndx].setAngle(delta_theta[ndx]);
-					deltaV[ndx].scl(Ship.SHIP_LINEAR_ACCELERATION * (delta_t + delta_theta[ndx] / Ship.SHIP_ANGULAR_VELOCITY));
-				}
-			}
+                delta_theta[ndx] = (float)(Math.PI * ((float)(ndx/granularity) - 1));
+                deltaV[ndx] = new Vector2(1f,0f);
+                deltaV[ndx].setAngle(delta_theta[ndx]);
+                deltaV[ndx].scl(Ship.SHIP_LINEAR_ACCELERATION * (delta_t - Math.abs(delta_theta[ndx]) / Ship.SHIP_ANGULAR_VELOCITY));
+            }
 
 			for(EntityData asteroid : asteroids)
 			{
@@ -159,9 +151,37 @@ public class Main
 					//Determine excluded headings from delta-V ellipse based on occlusion points of velocity obstacle
 					//Excluded headings come from intersection of occlusion point rays with curve - rays are theta = constant
 					//Find thetas on delta-V curve bracketing ray theta, linearly interpolate to find intersection vector
-					//Up to 2 intersections per ray (0-4 per obstacle)
+					//Up to 4 intersections per ray (0-8 per obstacle)
 					//To determine headings, translate vector back to origin (subtract relv), rotate back to x-axis (rotate -ship.angle)
 					//use getAngle to get headings of intersection points
+
+                    ArrayList<Float> occ_intersect = new ArrayList<Float>();
+
+                    float[][] theta_diff = new float[2][theta.length];
+
+                    // Occlusion point boundaries are rays of constant theta
+                    for(int ndx = 0; ndx < theta.length; ndx++) {
+                        for(int occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
+                            theta_diff[occ_ndx][ndx] = theta[ndx] - occ_point[occ_ndx].angle();
+                        }
+                    }
+
+                    // Locate crossings by finding sign changes of theta - occlusion_theta
+                    for(int occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
+                        float prev = Math.signum(theta_diff[occ_ndx][0]);
+                        for(int ndx = 0; ndx < theta_diff.length; ndx++) {
+                            if(theta_diff[occ_ndx][ndx] == 0) {
+                                occ_intersect.add(new Float(delta_theta[ndx]));
+                            } else if(Math.signum(theta_diff[occ_ndx][ndx]) != prev) {
+                                float interp = (delta_theta[ndx] - delta_theta[ndx-1]) / (theta_diff[occ_ndx][ndx] - theta_diff[occ_ndx][ndx-1]) * theta_diff[occ_ndx][ndx] + delta_theta[ndx];
+                                occ_intersect.add(new Float(interp));
+                            }
+                            prev = Math.signum(theta_diff[occ_ndx][ndx]);
+                        }
+                    }
+
+                    //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
+                    //Store as bitmask - 0 = not excluded, 1 = excluded
 
 					//Store excluded headings
 

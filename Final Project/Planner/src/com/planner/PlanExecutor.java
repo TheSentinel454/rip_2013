@@ -21,6 +21,14 @@ public class PlanExecutor extends Thread
 	private QueryInterface m_Server;
 	private ConcurrentLinkedQueue<PlanAction> m_Plan;
 
+	private ConcurrentLinkedQueue<PlanAction> getPlan()
+	{
+		synchronized (m_Plan)
+		{
+			return m_Plan;
+		}
+	}
+
 	/**
 	 * Plan Executor Constructor
 	 */
@@ -44,10 +52,10 @@ public class PlanExecutor extends Thread
 			try
 			{
 				// See if we need to execute any plan actions
-				while(m_Plan.peek() != null && m_Plan.peek().getTime() < System.currentTimeMillis())
+				while(getPlan().peek() != null && getPlan().peek().getTime() < System.currentTimeMillis())
 				{
 					// Execute the action
-					switch (m_Plan.poll().getAction())
+					switch (getPlan().poll().getAction())
 					{
 						case startForward:
 							m_Server.startForward();
@@ -98,21 +106,24 @@ public class PlanExecutor extends Thread
 	 */
 	public void setPlan(ArrayList<PlanAction> plan)
 	{
-		// Clear the current queue
-		m_Plan.clear();
-		// Add to the plan till the sizes match
-		while(m_Plan.size() != plan.size())
+		synchronized (m_Plan)
 		{
-			PlanAction earliestAction = null;
-			// Go through the plan and insert into the plan
-			for(PlanAction action: plan)
+			// Clear the current queue
+			m_Plan.clear();
+			// Add to the plan till the sizes match
+			while(m_Plan.size() != plan.size())
 			{
-				// Find the lowest time action
-				if (earliestAction == null || earliestAction.getTime() > action.getTime())
-					earliestAction = action;
+				PlanAction earliestAction = null;
+				// Go through the plan and insert into the plan
+				for(PlanAction action: plan)
+				{
+					// Find the lowest time action
+					if (earliestAction == null || earliestAction.getTime() > action.getTime())
+						earliestAction = action;
+				}
+				// Add the action to the plan
+				m_Plan.add(earliestAction);
 			}
-			// Add the action to the plan
-			m_Plan.add(earliestAction);
 		}
 	}
 
@@ -122,9 +133,12 @@ public class PlanExecutor extends Thread
 	 */
 	public void setPlan(ConcurrentLinkedQueue<PlanAction> plan)
 	{
-		// Clear the current queue
-		m_Plan.clear();
-		// Set the plan
-		m_Plan = plan;
+		synchronized (m_Plan)
+		{
+			// Clear the current queue
+			m_Plan.clear();
+			// Set the plan
+			m_Plan = plan;
+		}
 	}
 }

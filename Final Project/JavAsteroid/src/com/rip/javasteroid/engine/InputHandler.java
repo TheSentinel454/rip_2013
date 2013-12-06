@@ -78,15 +78,18 @@ public class InputHandler implements InputProcessor
 		switch(keycode)
 		{
 			case Input.Keys.UP:
+			case Input.Keys.W:
 				startForward();
 				break;
 			case Input.Keys.SPACE:
 				fire();
 				break;
 			case Input.Keys.RIGHT:
+			case Input.Keys.D:
 				startRight();
 				break;
 			case Input.Keys.LEFT:
+			case Input.Keys.A:
 				startLeft();
 				break;
 			case Input.Keys.R:
@@ -106,12 +109,15 @@ public class InputHandler implements InputProcessor
 		switch(keycode)
 		{
 			case Input.Keys.UP:
+			case Input.Keys.W:
 				stopForward();
 				break;
 			case Input.Keys.RIGHT:
+			case Input.Keys.D:
 				stopRight();
 				break;
 			case Input.Keys.LEFT:
+			case Input.Keys.A:
 				stopLeft();
 				break;
 		}

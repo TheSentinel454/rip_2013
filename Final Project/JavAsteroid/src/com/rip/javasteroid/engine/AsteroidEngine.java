@@ -75,17 +75,8 @@ public class AsteroidEngine implements Screen, ContactListener
 		generateNewAsteroid();
 		generateNewAsteroid();
 
-		// Start schedule to randomly add new ones
-		m_Timer = new Timer();
-		m_Timer.scheduleAtFixedRate(new TimerTask()
-		{
-			@Override
-			public void run()
-			{
-				// Add a new asteroid
-				m_NewAsteroid = true;
-			}
-		}, 5 * 1000, 5 * 1000); // 5 second timer for asteroid creation
+		// Start schedule to create the asteroids
+		scheduleNewAsteroidCreation();
 
 		m_Handler = new InputHandler(m_Ship);
 		try
@@ -104,15 +95,15 @@ public class AsteroidEngine implements Screen, ContactListener
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		//m_DebugRenderer.render(m_World, m_Camera.combined);
+		m_DebugRenderer.render(m_World, m_Camera.combined);
 		m_SpriteBatch.begin();
-		m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
-		m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
 		for(Asteroid be: m_Asteroids)
 			be.draw(m_SpriteBatch);
 		m_Ship.draw(m_SpriteBatch);
 		if (m_GameOver)
 			m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
+		m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
+		m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
 		m_SpriteBatch.end();
 
 		for(Asteroid be: m_Asteroids)
@@ -135,8 +126,11 @@ public class AsteroidEngine implements Screen, ContactListener
 				{
 					// Take a life
 					if (m_GameData.takeLife())
+					{
 						// Game over
 						m_GameOver = true;
+						m_Timer.cancel();
+					}
 					entity.destroy();
 				}
 				else if (entity instanceof Bullet)
@@ -292,7 +286,28 @@ public class AsteroidEngine implements Screen, ContactListener
 
 			// Reset the flag
 			m_GameOver = false;
+
+			// Start schedule to create the asteroids
+			scheduleNewAsteroidCreation();
 		}
+	}
+
+	/**
+	 * Start the timer to create the new asteroids
+	 */
+	private void scheduleNewAsteroidCreation()
+	{
+		// Start schedule to randomly add new ones
+		m_Timer = new Timer();
+		m_Timer.scheduleAtFixedRate(new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				// Add a new asteroid
+				m_NewAsteroid = true;
+			}
+		}, 5 * 1000, 5 * 1000); // 5 second timer for asteroid creation
 	}
 
 	/**
@@ -336,6 +351,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		}
 		// Create and add the new asteroid
 		m_Asteroids.add(new Asteroid(new Vector2(x, y), Asteroid.AsteroidSize.Large, m_World));
+		System.out.println("Added new Asteroid!");
 	}
 
 	/**

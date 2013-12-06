@@ -100,6 +100,9 @@ public class Main
 
 			Vector2 shippos = ship.getPosition();
 
+            ArrayList<Float> occ_headings = new ArrayList<Float>();
+            ArrayList<Boolean> safe_headings = new ArrayList<Boolean>();
+
 			//Calculate delta-V curve
 			int granularity = 1000; //per semicircle
 			float[] delta_theta = new float[2*granularity+1];
@@ -181,18 +184,21 @@ public class Main
                         }
                     }
 
+                    //Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
+                    //rather than simplistic heading exclusion
+
                     //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
                     //Store as bitmask - 0 = not safe, 1 = safe
                     Collections.sort(occ_intersect);
-                    if(occ_intersect.get(occ_intersect.size()-1) == 360.0f) {
-                        occ_intersect.remove(occ_intersect.size()-1);
+                    if(occ_intersect.get(occ_intersect.size()-1) != 360.0f) {
+                        occ_intersect.add(360.0f);
                     }
-                    boolean[] safe = new boolean[occ_intersect.size()+1];
+                    boolean[] safe = new boolean[occ_intersect.size()];
 
                     float inc_angle = occ_point[1].angle() - occ_point[0].angle() + ((occ_point[1].angle() - occ_point[0].angle() >= 0) ? (0) : (360.0f));
 
                     for(int ndx = 0; ndx < safe.length; ndx++) {
-                        float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx))) + ((ndx+1 == safe.length) ? (360.0f) : (occ_intersect.get(ndx+1))));
+                        float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx-1))) + occ_intersect.get(ndx));
 
                         Vector2 dv = new Vector2(1f,0f);
                         dv.rotate(ang);
@@ -206,18 +212,52 @@ public class Main
                         safe[ndx] = ang > inc_angle;
                     }
 
-					//Store excluded headings
+					//Merge new exclusion headings with existing
+                    Float[] exist_headings = occ_headings.toArray(new Float[occ_headings.size()]);
+                    Boolean[] exist_safe = safe_headings.toArray(new Boolean[safe_headings.size()]);
 
-					//Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
-					//rather than simplistic heading exclusion
+                    Float[] merge_headings = occ_intersect.toArray(new Float[occ_intersect.size()]);
+
+                    ArrayList<Float> new_headings = new ArrayList<Float>();
+                    ArrayList<Boolean> new_safe = new ArrayList<Boolean>();
+
+                    int exist_ndx = 0;
+                    int merge_ndx = 0;
+
+                    while(exist_ndx < exist_safe.length && merge_ndx < safe.length) {
+                        Float exist_h = exist_headings[exist_ndx];
+                        Float merge_h = merge_headings[merge_ndx];
+
+                        //Select smaller heading
+                        Float new_h = Math.min(exist_h,merge_h);
+                        //If one of the two says it's unsafe, it's unsafe
+                        Boolean new_s = exist_safe[exist_ndx] & safe[merge_ndx];
+
+                        //Collapse redundant headings by updating previous heading until safety changes
+                        if(!new_headings.isEmpty() && new_safe.get(new_safe.size()-1).equals(new_s)) {
+                            new_headings.set(new_headings.size()-1,new_h);
+                        } else {
+                            new_headings.add(new_h);
+                            new_safe.add(new_s);
+                        }
+
+                        if(new_h.equals(exist_h)) {
+                            exist_ndx++;
+                        } else {
+                            merge_ndx++;
+                        }
+                    }
+
+                    occ_headings = new_headings;
+                    safe_headings = new_safe;
 				}
 			}
 
-			//Combine exclusion headings to determine allowable headings
-
-			//Select heading closest to line to goal
+			//Select heading somehow - right now pick straight up
+            float target_h = 90.0f;
 
 			//Determine combination of turning and thrusting to achieve that heading
+
 
 		}
 		catch(Throwable t)

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Main
 {
 	/* Constants */
-	private static final int GAMES_TO_PLAY = 2000;
+	private static final int GAMES_TO_PLAY = 1;
 	private static final float SAFE_DISTANCE =  600.0f;
 	private static final float SAFETY_FACTOR = 0.05f;
 
@@ -24,7 +24,7 @@ public class Main
 	private static QueryInterface	m_Server;
 	private static PlanExecutor		m_Executor;
 	private static GameData			m_GameData;
-	private static Vector2			m_Goal;
+    private static ArrayList<PlanAction> m_Plan;
 
 	/**
 	 * Main entry point for the application
@@ -40,6 +40,8 @@ public class Main
 			m_Executor = new PlanExecutor(m_Server);
 			// Start the plan executor
 			m_Executor.start();
+
+            m_Plan = new ArrayList<PlanAction>();
 
 			int iGameCount = 0;
 			do
@@ -90,7 +92,8 @@ public class Main
 	 * Execute the planner to determine the best plan
 	 * @return Queue of planned actions
 	 */
-	private static ConcurrentLinkedQueue<PlanAction> determinePlan()
+	//private static ConcurrentLinkedQueue<PlanAction> determinePlan()
+    private static ArrayList<PlanAction> determinePlan()
 	{
 		ConcurrentLinkedQueue<PlanAction> plan = new ConcurrentLinkedQueue<PlanAction>();
 		try
@@ -257,14 +260,27 @@ public class Main
             float target_h = 90.0f;
 
 			//Determine combination of turning and thrusting to achieve that heading
+            if(m_Plan.isEmpty()) {
+                float turn_angle = target_h - ship.getAngle();
+                float turn_time = turn_angle / Ship.SHIP_ANGULAR_VELOCITY;
+                float burntime = delta_t - turn_time;
+                PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
+                PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
 
+                long start_time = System.currentTimeMillis() + 100; //Start 0.1 seconds after now
 
+                m_Plan.add(new PlanAction(start_time,turnstart));
+                m_Plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
+                m_Plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
+                m_Plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
+            }
 		}
 		catch(Throwable t)
 		{
 			System.out.println("DeterminePlan(): " + t.getMessage());
 		}
 		// Return the plan
-		return plan;
+		//return plan;
+        return m_Plan;
 	}
 }

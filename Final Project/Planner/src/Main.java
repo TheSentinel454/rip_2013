@@ -68,7 +68,13 @@ public class Main
 							break;
 					}
 					// Execute the planner and set the plan
-					m_Executor.setPlan(determinePlan());
+                    if(m_Plan.isEmpty()) {
+                        m_Plan = determinePlan();
+                    }
+                    System.out.println(m_Plan.get(0).getAction().toString() + ", " + m_Plan.get(0).getTime());
+                    System.out.println(m_Plan.get(1).getAction().toString() + ", " + m_Plan.get(1).getTime());
+                    System.out.println("Currently " + System.currentTimeMillis());
+                    m_Executor.setPlan(m_Plan);
 				}
 				catch(Exception e)
 				{
@@ -95,7 +101,7 @@ public class Main
 	//private static ConcurrentLinkedQueue<PlanAction> determinePlan()
     private static ArrayList<PlanAction> determinePlan()
 	{
-		ConcurrentLinkedQueue<PlanAction> plan = new ConcurrentLinkedQueue<PlanAction>();
+		ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
 		try
 		{
 			EntityData ship = m_GameData.getShipData();
@@ -122,7 +128,7 @@ public class Main
                 deltaV[ndx].scl(Ship.SHIP_LINEAR_ACCELERATION * (delta_t - (float)Math.toRadians(delta_theta[ndx] < 180 ? delta_theta[ndx] : Math.abs(delta_theta[ndx]-360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
             }
 
-			for(EntityData asteroid : asteroids)
+			/*for(EntityData asteroid : asteroids)
 			{
 				Vector2 astpos = asteroid.getPosition();
 				Vector2 relpos = new Vector2(astpos);
@@ -254,33 +260,31 @@ public class Main
                     occ_headings = new_headings;
                     safe_headings = new_safe;
 				}
-			}
+			}    */
 
 			//Select heading somehow - right now pick straight up
             float target_h = 90.0f;
 
 			//Determine combination of turning and thrusting to achieve that heading
-            if(m_Plan.isEmpty()) {
-                float turn_angle = target_h - ship.getAngle();
-                float turn_time = turn_angle / Ship.SHIP_ANGULAR_VELOCITY;
-                float burntime = delta_t - turn_time;
-                PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
-                PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
 
-                long start_time = System.currentTimeMillis() + 100; //Start 0.1 seconds after now
+            float turn_angle = target_h - ship.getAngle();
+            float turn_time = (float)Math.toRadians(turn_angle) / Ship.SHIP_ANGULAR_VELOCITY;
+            float burntime = delta_t - turn_time;
+            PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
+            PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
 
-                m_Plan.add(new PlanAction(start_time,turnstart));
-                m_Plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
-                m_Plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
-                m_Plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
-            }
+            long start_time = System.currentTimeMillis(); //Start 0.1 seconds after now
+
+            plan.add(new PlanAction(start_time, turnstart));
+            plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
+            /*plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
+            plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));  */
 		}
 		catch(Throwable t)
 		{
 			System.out.println("DeterminePlan(): " + t.getMessage());
 		}
 		// Return the plan
-		//return plan;
-        return m_Plan;
+		return plan;
 	}
 }

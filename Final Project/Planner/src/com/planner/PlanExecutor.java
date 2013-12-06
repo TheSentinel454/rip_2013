@@ -54,6 +54,9 @@ public class PlanExecutor extends Thread
 				// See if we need to execute any plan actions
 				while(getPlan().peek() != null && getPlan().peek().getTime() < System.currentTimeMillis())
 				{
+                    /*System.out.println("Before:");
+                    System.out.println(getPlan().size());
+                    System.out.println(getPlan().peek().getAction().toString());  */
 					// Execute the action
 					switch (getPlan().poll().getAction())
 					{
@@ -79,6 +82,9 @@ public class PlanExecutor extends Thread
 							m_Server.fire();
 							break;
 					}
+                    /*System.out.println("After:");
+                    System.out.println(getPlan().size());
+                    System.out.println(getPlan().peek().getAction().toString());      */
 				}
 
 				// Sleep for a millisecond

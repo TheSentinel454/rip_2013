@@ -21,6 +21,9 @@ public class GameData implements Serializable
 	private Integer m_Lives = 3;
 	private EntityData m_ShipData;
 	private ArrayList<EntityData> m_AsteroidData;
+	private Boolean m_TurningRight = false;
+	private Boolean m_TurningLeft = false;
+	private Boolean m_MovingForward = false;
 
 	/**
 	 * Update the ship data
@@ -32,6 +35,10 @@ public class GameData implements Serializable
 		{
 			// Update the ship data
 			m_ShipData.update(ship);
+			// Update the flags
+			m_MovingForward = ship.isMoving();
+			m_TurningLeft = ship.isTurningLeft();
+			m_TurningRight = ship.isTurningRight();
 		}
 	}
 
@@ -83,6 +90,33 @@ public class GameData implements Serializable
 		{
 			return m_Score;
 		}
+	}
+
+	/**
+	 * Is the ship currently turning right?
+	 * @return True if the ship is turning right, False otherwise
+	 */
+	public Boolean getTurningRight()
+	{
+		return m_TurningRight;
+	}
+
+	/**
+	 * Is the ship currently turning left?
+	 * @return True if the ship is turning left, False otherwise
+	 */
+	public Boolean getTurningLeft()
+	{
+		return m_TurningLeft;
+	}
+
+	/**
+	 * Is the ship currently moving forward?
+	 * @return True if the ship is moving forward, False otherwise
+	 */
+	public Boolean getMovingForward()
+	{
+		return m_MovingForward;
 	}
 
 	/**

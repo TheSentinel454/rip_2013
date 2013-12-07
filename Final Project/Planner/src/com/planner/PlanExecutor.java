@@ -84,9 +84,9 @@ public class PlanExecutor extends Thread
 				// Sleep for a millisecond
 				Thread.sleep(1);
 			}
-			catch(Exception e)
+			catch(Throwable t)
 			{
-				System.out.println("PlanExecutor.run(): " + e.getMessage());
+				System.out.println("PlanExecutor.run(): " + t.getMessage());
 			}
 		}
 		System.out.println("Plan executor exiting!");

@@ -50,8 +50,9 @@ public class AsteroidEngine implements Screen, ContactListener
 	private final Object 		m_CollisionQueueLock = new Object();
 	private ConcurrentLinkedQueue<BaseEntity> m_CollisionQueue = new ConcurrentLinkedQueue<BaseEntity>();
 	private Timer				m_Timer;
-	private boolean				m_NewAsteroid = false;
-	private boolean				m_GameOver = false;
+	private Boolean				m_NewAsteroid = false;
+	private Boolean				m_NewBullet = false;
+	private Boolean				m_GameOver = false;
 	private Boolean				m_Reset = false;
 
 	public AsteroidEngine()
@@ -138,13 +139,27 @@ public class AsteroidEngine implements Screen, ContactListener
 					entity.destroy();
 			}
 		}
-		// See if we need to create another asteroid
-		if (m_NewAsteroid)
+		synchronized (m_NewAsteroid)
 		{
-			// Generate a new asteroid
-			generateNewAsteroid();
-			// Flip the flag again
-			m_NewAsteroid = false;
+			// See if we need to create another asteroid
+			if (m_NewAsteroid)
+			{
+				// Generate a new asteroid
+				generateNewAsteroid();
+				// Flip the flag again
+				m_NewAsteroid = false;
+			}
+		}
+		// See if we need to create another asteroid
+		synchronized (m_NewBullet)
+		{
+			if (m_NewBullet)
+			{
+				// Generate a new bullet
+				m_Ship.fire();
+				// Flip the flag again
+				m_NewBullet = false;
+			}
 		}
 		synchronized (m_Reset)
 		{
@@ -277,6 +292,17 @@ public class AsteroidEngine implements Screen, ContactListener
 		{
 			if (m_GameOver)
 				m_Reset = true;
+		}
+	}
+
+	/**
+	 * Fire a bullet
+	 */
+	public void fire()
+	{
+		synchronized (m_NewBullet)
+		{
+			m_NewBullet = true;
 		}
 	}
 

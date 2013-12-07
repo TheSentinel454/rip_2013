@@ -59,7 +59,7 @@ public class InputHandler implements InputProcessor
 	public void fire()
 	{
 		if (!JavAsteroid.getEngine().isGameOver())
-			m_Ship.fire();
+			JavAsteroid.getEngine().fire();
 	}
 	public void reset()
 	{

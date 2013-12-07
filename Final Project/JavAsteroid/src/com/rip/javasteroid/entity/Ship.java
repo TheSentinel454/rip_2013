@@ -48,6 +48,18 @@ public class Ship extends BaseEntity
 	{
 		return m_Active;
 	}
+	public boolean isMoving()
+	{
+		return m_Moving;
+	}
+	public boolean isTurningLeft()
+	{
+		return m_RotatingLeft && !m_RotatingRight;
+	}
+	public boolean isTurningRight()
+	{
+		return m_RotatingRight && ! m_RotatingLeft;
+	}
 
 	private World 				m_World;
 	private boolean				m_Moving		= false;

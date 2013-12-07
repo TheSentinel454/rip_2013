@@ -6,6 +6,7 @@ import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
 import com.rip.javasteroid.remote.QueryInterface;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -54,9 +55,6 @@ public class PlanExecutor extends Thread
 				// See if we need to execute any plan actions
 				while(getPlan().peek() != null && getPlan().peek().getTime() < System.currentTimeMillis())
 				{
-                    /*System.out.println("Before:");
-                    System.out.println(getPlan().size());
-                    System.out.println(getPlan().peek().getAction().toString());  */
 					// Execute the action
 					switch (getPlan().poll().getAction())
 					{
@@ -82,11 +80,7 @@ public class PlanExecutor extends Thread
 							m_Server.fire();
 							break;
 					}
-                    /*System.out.println("After:");
-                    System.out.println(getPlan().size());
-                    System.out.println(getPlan().peek().getAction().toString());      */
 				}
-
 				// Sleep for a millisecond
 				Thread.sleep(1);
 			}
@@ -116,20 +110,10 @@ public class PlanExecutor extends Thread
 		{
 			// Clear the current queue
 			m_Plan.clear();
-			// Add to the plan till the sizes match
-			while(m_Plan.size() != plan.size())
-			{
-				PlanAction earliestAction = null;
-				// Go through the plan and insert into the plan
-				for(PlanAction action: plan)
-				{
-					// Find the lowest time action
-					if (earliestAction == null || earliestAction.getTime() > action.getTime())
-						earliestAction = action;
-				}
-				// Add the action to the plan
-				m_Plan.add(earliestAction);
-			}
+			// Sort it
+			Collections.sort(plan);
+			// Add to the queue
+			m_Plan.addAll(plan);
 		}
 	}
 

@@ -70,11 +70,11 @@ public class Main
 					// Execute the planner and set the plan
                     if(m_Plan.isEmpty()) {
                         m_Plan = determinePlan();
+	                    m_Executor.setPlan(m_Plan);
                     }
                     System.out.println(m_Plan.get(0).getAction().toString() + ", " + m_Plan.get(0).getTime());
                     System.out.println(m_Plan.get(1).getAction().toString() + ", " + m_Plan.get(1).getTime());
                     System.out.println("Currently " + System.currentTimeMillis());
-                    m_Executor.setPlan(m_Plan);
 				}
 				catch(Exception e)
 				{

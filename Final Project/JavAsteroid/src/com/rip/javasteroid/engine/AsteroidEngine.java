@@ -52,6 +52,7 @@ public class AsteroidEngine implements Screen, ContactListener
 	private Timer				m_Timer;
 	private boolean				m_NewAsteroid = false;
 	private boolean				m_GameOver = false;
+	private Boolean				m_Reset = false;
 
 	public AsteroidEngine()
 	{
@@ -144,6 +145,11 @@ public class AsteroidEngine implements Screen, ContactListener
 			generateNewAsteroid();
 			// Flip the flag again
 			m_NewAsteroid = false;
+		}
+		synchronized (m_Reset)
+		{
+			if (m_Reset)
+				reset();
 		}
 	}
 
@@ -267,6 +273,18 @@ public class AsteroidEngine implements Screen, ContactListener
 	 */
 	public void resetGame()
 	{
+		synchronized (m_Reset)
+		{
+			if (m_GameOver)
+				m_Reset = true;
+		}
+	}
+
+	/**
+	 * Reset the game
+	 */
+	private void reset()
+	{
 		// Make sure the game is over
 		if (m_GameOver)
 		{
@@ -284,8 +302,9 @@ public class AsteroidEngine implements Screen, ContactListener
 			// Reset the game data
 			m_GameData.reset();
 
-			// Reset the flag
+			// Reset the flags
 			m_GameOver = false;
+			m_Reset = false;
 
 			// Start schedule to create the asteroids
 			scheduleNewAsteroidCreation();

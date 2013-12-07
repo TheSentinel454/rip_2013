@@ -6,8 +6,14 @@ package com.planner;
  * Date: 11/30/13
  * Time: 12:16 PM
  */
-public class PlanAction
+public class PlanAction implements Comparable<PlanAction>
 {
+	@Override
+	public int compareTo(PlanAction o)
+	{
+		return (int)Math.signum(this.m_Time - o.getTime());
+	}
+
 	/* Enum */
 	public enum Action
 	{

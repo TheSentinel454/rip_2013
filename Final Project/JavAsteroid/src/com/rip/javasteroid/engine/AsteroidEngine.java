@@ -319,6 +319,9 @@ public class AsteroidEngine implements Screen, ContactListener
 				m_World.destroyBody(asteroid.getBody());
 			m_Asteroids.clear();
 
+			// Reset the ship
+			m_Ship.reset();
+
 			// Generate the starting asteroids
 			generateNewAsteroid();
 			generateNewAsteroid();

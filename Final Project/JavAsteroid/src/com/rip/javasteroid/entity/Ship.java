@@ -68,7 +68,8 @@ public class Ship extends BaseEntity
 	private ArrayList<Bullet>	m_Bullets		= new ArrayList<Bullet>();
 	private boolean				m_AbleToShoot	= true;
 	private float				m_Cooldown		= FIRE_COOLDOWN;
-	private boolean 			m_Active		= true;
+	private boolean				m_Active		= true;
+	private Timer				m_Timer;
 
 	private TextureWrapper		m_MoveTexture;
 	private TextureWrapper		m_StopTexture;
@@ -243,6 +244,28 @@ public class Ship extends BaseEntity
 	}
 
 	/**
+	 * Reset the ship data
+	 */
+	public void reset()
+	{
+		// Reset the flags
+		m_AbleToShoot = true;
+		m_Active = true;
+		setMoving(false);
+		setRotatingRight(false);
+		setRotatingLeft(false);
+		// Set the location back to the center
+		m_Body.setTransform(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), 0.0f);
+		// Reset the firing flags
+		m_Cooldown = 0.0f;
+		// Reset the velocities
+		m_Body.setLinearVelocity(0.0f,0.0f);
+		m_Body.setAngularVelocity(0.0f);
+		// Cancel the active timer
+		cancelActiveTimer();
+	}
+
+	/**
 	 * Destroy the ship
 	 */
 	@Override
@@ -250,34 +273,42 @@ public class Ship extends BaseEntity
 	{
 		try
 		{
-			// Set to inactive
-			m_Active = false;
-			// Start active timer (3 seconds)
-			Timer timer = new Timer();
-			timer.schedule(new TimerTask()
-			{
-				@Override
-				public void run()
-				{
-					m_Active = true;
-				}
-			}, 3*1000);
-			// Set the location back to the center
-			m_Body.setTransform(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), 0.0f);
-			// Reset the firing flags
-			m_AbleToShoot = true;
-			m_Cooldown = 0.0f;
-			// Reset the velocities
-			m_Body.setLinearVelocity(0.0f,0.0f);
-			m_Body.setAngularVelocity(0.0f);
-			// Reset movement flags
-			m_Moving = false;
-			m_RotatingLeft = false;
-			m_RotatingRight = false;
+			// Reset the ship
+			reset();
+			// Setup the active timer
+			setupActiveTimer();
 		}
 		catch (Exception e)
 		{
 			System.out.println("Exception: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Cancel the current active timer
+	 */
+	private void cancelActiveTimer()
+	{
+		if (m_Timer != null)
+			m_Timer.cancel();
+	}
+
+	/**
+	 * Setup the Active Timer
+	 */
+	private void setupActiveTimer()
+	{
+		// Set to inactive
+		m_Active = false;
+		// Start active timer (3 seconds)
+		m_Timer = new Timer();
+		m_Timer.schedule(new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				m_Active = true;
+			}
+		}, 3*1000);
 	}
 }

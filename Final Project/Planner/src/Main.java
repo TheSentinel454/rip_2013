@@ -12,7 +12,7 @@ import java.util.Collections;
 public class Main
 {
     /* Constants */
-    private static final int GAMES_TO_PLAY = 1;
+    private static final int GAMES_TO_PLAY = 3;
     private static float SAFE_DISTANCE;
     private static float SAFETY_FACTOR;
     private static float DELTA_T;
@@ -63,9 +63,10 @@ public class Main
                         // Increment counter to know we just did another round
                         iGameCount++;
                         // Check counter to see if we have planned enough
-                        if (iGameCount > GAMES_TO_PLAY)
+                        if (iGameCount > GAMES_TO_PLAY) {
                             // We are done planning
                             break;
+                        }
                     }
                     // Execute the planner and set the plan
                     m_Plan = determinePlan();
@@ -94,7 +95,6 @@ public class Main
      * Execute the planner to determine the best plan
      * @return Queue of planned actions
      */
-    //private static ConcurrentLinkedQueue<PlanAction> determinePlan()
     private static ArrayList<PlanAction> determinePlan() {
         ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
         try
@@ -122,7 +122,6 @@ public class Main
 
                 //Select heading
                 target_h = selectHeading(ship, asteroids, exclusions);
-                System.out.println(target_h);
             } while(target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
             //Don't let safe distance become arbitrarily small
 
@@ -356,17 +355,35 @@ public class Main
     private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics) {
         float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
         float turn_time = (float)Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
-        float burntime = DELTA_T - turn_time;
-        PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
-        PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
+        float burntime = Math.max(DELTA_T - turn_time, 0.0f);
 
         //plan.add(new PlanAction(start_time, PlanAction.Action.fire));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
-        plan.add(new PlanAction(start_time, turnstart));
-        plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
+
+        if(turn_angle > 0.0f) {
+            if(m_GameData.getTurningRight()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+            }
+            plan.add(new PlanAction(start_time, PlanAction.Action.startLeft));
+            plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.stopLeft));
+        } else if(turn_angle < 0.0f) {
+            if(m_GameData.getTurningLeft()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+            }
+            plan.add(new PlanAction(start_time, PlanAction.Action.startRight));
+            plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.stopRight));
+        } else {
+            if(m_GameData.getTurningRight()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+            }
+            if(m_GameData.getTurningLeft()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+            }
+        }
+
         if(Math.abs(turn_angle) > 1.0f) { //If already close to heading, just keep burning
+            if(m_GameData.getMovingForward()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
+            }
             plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
             plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
         } else {
@@ -399,4 +416,4 @@ public class Main
 
         metrics.addPlanMetrics(newPos, newV, turn_angle);
     }
-}
+ }

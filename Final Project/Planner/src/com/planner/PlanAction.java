@@ -58,4 +58,8 @@ public class PlanAction implements Comparable<PlanAction>
 		m_Time = time;
 		m_Action = action;
 	}
+
+    public void shiftTime(long diff) {
+        m_Time += diff;
+    }
 }

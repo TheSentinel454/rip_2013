@@ -114,6 +114,7 @@ public class Main
 
             //Select heading
             float target_h = selectHeading(ship, asteroids, exclusions);
+            System.out.println(target_h);
 
             //Determine combination of turning and thrusting to achieve that heading
             calculatePlan(plan, ship, asteroids, exclusions, target_h, pullTime);
@@ -152,6 +153,7 @@ public class Main
 
         float shipAngle = ship.getAngle();
 
+        System.out.println("New search");
         for(EntityData asteroid : asteroids)
         {
             Vector2 relpos = new Vector2(asteroid.getPosition());
@@ -166,6 +168,7 @@ public class Main
 
             if(relpos.len() - config_radius < SAFE_DISTANCE)
             {
+                System.out.println("Asteroid in range!");
                 //Calculate occlusion points
                 float rotate_angle;
                 float occ_len;
@@ -227,42 +230,44 @@ public class Main
                 //Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
                 //rather than simplistic heading exclusion
 
-                //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
-                if(!occ_intersect.isEmpty()) {
-                    Collections.sort(occ_intersect);
-                    if(occ_intersect.get(occ_intersect.size()-1) != 360.0f) {
-                        occ_intersect.add(360.0f);
-                    }
-
-                    ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
-
-                    float inc_angle = occ_point[1].angle() - occ_point[0].angle() + ((occ_point[1].angle() - occ_point[0].angle() >= 0) ? (0) : (360.0f));
-
-                    for(int ndx = 0; ndx < occ_intersect.size(); ndx++) {
-                        float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx-1))) + occ_intersect.get(ndx));
-
-                        Vector2 dv = new Vector2(1f,0f);
-                        dv.rotate(ang);
-                        dv.scl(Ship.SHIP_LINEAR_ACCELERATION * (DELTA_T - (float)Math.toRadians(ang < 180 ? ang : Math.abs(ang-360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
-                        dv.rotate(shipAngle).add(relv);
-
-                        ang = occ_point[1].angle() - dv.angle() + ((occ_point[1].angle() - dv.angle() >= 0) ? (0) : (360.0f));
-                        ang += dv.angle() - occ_point[1].angle() + ((dv.angle() - occ_point[1].angle() >= 0) ? (0) : (360.0f));
-
-                        //Safe if sum of angles is greater than angle between occlusion points
-                        new_excludes.add(new ExcludePoint(occ_intersect.get(ndx),ang > inc_angle));
-                    }
-
-                    //Merge new exclusion headings with existing
-                    exclusions.addAll(new_excludes);
+                if(occ_intersect.isEmpty() || occ_intersect.get(occ_intersect.size()-1) != 360.0f) {
+                    occ_intersect.add(360.0f);
                 }
+
+                //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
+                Collections.sort(occ_intersect);
+
+                ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
+
+                float inc_angle = occ_point[1].angle() - occ_point[0].angle() + ((occ_point[1].angle() - occ_point[0].angle() >= 0) ? (0) : (360.0f));
+
+                for(int ndx = 0; ndx < occ_intersect.size(); ndx++) {
+                    float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx-1))) + occ_intersect.get(ndx));
+
+                    Vector2 dv = new Vector2(1f,0f);
+                    dv.rotate(ang);
+                    dv.scl(Ship.SHIP_LINEAR_ACCELERATION * (DELTA_T - (float)Math.toRadians(ang < 180 ? ang : Math.abs(ang-360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
+                    dv.rotate(shipAngle).add(relv);
+
+                    ang = occ_point[1].angle() - dv.angle() + ((occ_point[1].angle() - dv.angle() >= 0) ? (0) : (360.0f));
+                    ang += dv.angle() - occ_point[1].angle() + ((dv.angle() - occ_point[1].angle() >= 0) ? (0) : (360.0f));
+
+                    //Safe if sum of angles is greater than angle between occlusion points
+                    new_excludes.add(new ExcludePoint(occ_intersect.get(ndx),ang > inc_angle));
+                }
+
+                //Merge new exclusion headings with existing
+                System.out.println(exclusions.size());
+                exclusions.addAll(new_excludes);
+                System.out.println(exclusions.size());
+
             }
         }
         return exclusions;
     }
 
     private static float selectHeading(EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions) {
-        return 90.0f;
+        return exclusions.findClosestSafeHeading(ship.getAngle());
     }
 
     private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time) {

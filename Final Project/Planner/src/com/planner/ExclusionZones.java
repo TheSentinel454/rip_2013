@@ -47,11 +47,34 @@ public class ExclusionZones {
                 newPoint = minPoint.merge(newPoint);
 
                 //Add to list if necessary
+                newList.add(minPoint);
                 if(newPoint != null) {
                     newList.add(newPoint);
                 }
             }
             this.exclusions = newList;
         }
+    }
+
+    public float findClosestSafeHeading(float heading) {
+        float safeHeading = -180.0f;
+        for(int ndx = 0; ndx < exclusions.size(); ndx++) {
+            ExcludePoint excludePoint = exclusions.get(ndx);
+            if(excludePoint.getHeading() > heading) {
+                //If first larger one ends safe zone, then we can just go straight ahead
+                if(excludePoint.isSafe()) {
+                    safeHeading = heading;
+                } else if(exclusions.size() > 1) { //otherwise we need to find the closest safe zone endpoint, forward or backward
+                    int forward_ndx = (ndx+1 == exclusions.size() && !exclusions.get(1).isSafe()) ? (1) : (ndx);
+                    int backward_ndx =(ndx-1 < 0 && !exclusions.get(exclusions.size()-1).isSafe()) ? (exclusions.size()-2) : ((ndx+exclusions.size()-1)%exclusions.size());
+                    safeHeading = Math.min(exclusions.get(forward_ndx).getHeading(), exclusions.get(backward_ndx).getHeading());
+                }
+            }
+        }
+        return safeHeading;
+    }
+
+    public int size() {
+        return exclusions.size();
     }
 }

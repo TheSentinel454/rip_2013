@@ -63,7 +63,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Camera = new OrthographicCamera(WIDTH, HEIGHT);
 		m_Camera.position.set(m_Camera.viewportWidth / 2, m_Camera.viewportHeight / 2, 0f);
 		m_Camera.update();
-		m_GameData = new GameData();
+		m_GameData = new GameData(WIDTH, HEIGHT);
 
 		m_DebugRenderer = new Box2DDebugRenderer();
 		m_World.setContactListener(this);

@@ -17,6 +17,8 @@ public class GameData implements Serializable
 {
 	/* Private Attributes */
 	private Boolean m_GameOver = false;
+	private Integer m_Width = 0;
+	private Integer m_Height = 0;
 	private Integer m_Score = 0;
 	private Integer m_Lives = 3;
 	private EntityData m_ShipData;
@@ -93,6 +95,24 @@ public class GameData implements Serializable
 	}
 
 	/**
+	 * Get the width of the world
+	 * @return Width of the world
+	 */
+	public int getWidth()
+	{
+		return m_Width;
+	}
+
+	/**
+	 * Get the height of the world
+	 * @return Height of the world
+	 */
+	public int getHeight()
+	{
+		return m_Height;
+	}
+
+	/**
 	 * Is the ship currently turning right?
 	 * @return True if the ship is turning right, False otherwise
 	 */
@@ -155,8 +175,10 @@ public class GameData implements Serializable
 	/**
 	 * Game data constructor
 	 */
-	public GameData()
+	public GameData(int width, int height)
 	{
+		m_Width = width;
+		m_Height = height;
 		reset();
 	}
 

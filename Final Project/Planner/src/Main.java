@@ -12,11 +12,12 @@ import java.util.Collections;
 public class Main
 {
     /* Constants */
-    private static final int GAMES_TO_PLAY = 3;
+    private static final int GAMES_TO_PLAY = 1;
     private static float SAFE_DISTANCE;
     private static float SAFETY_FACTOR;
     private static float DELTA_T;
     private static float HEADING_RANGE;
+    private static float WRAP_MARGIN = 10.0f;
 
     /* Private Attributes */
     private static QueryInterface	m_Server;
@@ -103,6 +104,8 @@ public class Main
             EntityData ship = m_GameData.getShipData();
             ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
 
+            wrapScreen(asteroids);
+
             ExclusionZones exclusions;
 
             SAFETY_FACTOR = 0.20f;
@@ -145,6 +148,59 @@ public class Main
         }
         // Return the plan
         return plan;
+    }
+
+    private static void wrapScreen(ArrayList<EntityData> asteroids) {
+        ArrayList<EntityData> wrapped_asteroids = new ArrayList<EntityData>();
+
+        for(EntityData ast : asteroids) {
+            float world_width = m_GameData.getWidth() + 2 * ast.getRadius();
+            float world_height = m_GameData.getHeight() + 2 * ast.getRadius();
+
+            boolean wrap_right = ast.getPosition().x > ((m_GameData.getWidth() / 2) - WRAP_MARGIN);
+            boolean wrap_left = ast.getPosition().x < (-1 * (m_GameData.getWidth() / 2) + WRAP_MARGIN);
+            boolean wrap_up = ast.getPosition().y > ((m_GameData.getHeight() / 2) - WRAP_MARGIN);
+            boolean wrap_down = ast.getPosition().y < (-1 * (m_GameData.getHeight() / 2) + WRAP_MARGIN);
+
+            Vector2 newPos;
+            if(wrap_right) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.sub(world_width, 0.0f);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+
+                if(wrap_up) {
+                    newPos.sub(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                } else if(wrap_down) {
+                    newPos.add(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                }
+            } else if(wrap_left) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.add(world_width, 0.0f);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+
+                if(wrap_up) {
+                    newPos.sub(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                } else if(wrap_down) {
+                    newPos.add(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                }
+            }
+
+            if(wrap_up) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.sub(0.0f, world_height);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+            } else if(wrap_down) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.add(0.0f, world_height);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+            }
+        }
+
+        asteroids.addAll(wrapped_asteroids);
     }
 
     private static ExclusionZones calculateExclusions(EntityData ship, ArrayList<EntityData> asteroids, Metrics metrics) {

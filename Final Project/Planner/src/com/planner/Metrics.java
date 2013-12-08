@@ -1,17 +1,8 @@
 package com.planner;
 
 import com.badlogic.gdx.math.Vector2;
-import com.rip.javasteroid.remote.EntityData;
 
 import java.util.ArrayList;
-
-/**
- * Created with IntelliJ IDEA.
- * User: Stef
- * Date: 12/7/13
- * Time: 10:12 PM
- * To change this template use File | Settings | File Templates.
- */
 
 //Metrics
 //Position and velocity after executing plan
@@ -30,7 +21,29 @@ public class Metrics {
         this.asteroidMetrics = new ArrayList<AsteroidData>();
     }
 
-    public void addAsteroid() {
+    public void addAsteroid(float distance, float angle, float impact, float HEADING_RANGE) {
+        AsteroidData newAst = new AsteroidData(distance, angle, impact);
+        newAst.setInRange(angle <= HEADING_RANGE || angle >= 360.0f - HEADING_RANGE);
+        asteroidMetrics.add(newAst);
+    }
 
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public Vector2 getPosition() {
+        return position;
+    }
+
+    public Vector2 getVelocity() {
+        return velocity;
+    }
+
+    public float getPercent_safe() {
+        return percent_safe;
+    }
+
+    public ArrayList<AsteroidData> getAsteroidMetrics() {
+        return asteroidMetrics;
     }
 }

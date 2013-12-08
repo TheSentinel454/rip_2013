@@ -15,154 +15,161 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Main
 {
-	/* Constants */
-	private static final int GAMES_TO_PLAY = 1;
-	private static final float SAFE_DISTANCE =  600.0f;
-	private static final float SAFETY_FACTOR = 0.05f;
+    /* Constants */
+    private static final int GAMES_TO_PLAY = 1;
+    private static final float SAFE_DISTANCE =  600.0f;
+    private static final float SAFETY_FACTOR = 0.05f;
 
-	/* Private Attributes */
-	private static QueryInterface	m_Server;
-	private static PlanExecutor		m_Executor;
-	private static GameData			m_GameData;
+    /* Private Attributes */
+    private static QueryInterface	m_Server;
+    private static PlanExecutor		m_Executor;
+    private static GameData			m_GameData;
     private static ArrayList<PlanAction> m_Plan;
 
-	/**
-	 * Main entry point for the application
-	 * @param args - Planner Arguments
-	 */
-	public static void main(String[] args)
-	{
-		try
-		{
-			// Connect to the Asteroids server via RMI
-			m_Server = (QueryInterface) Naming.lookup("rmi://localhost/Query");
-			// Initialize the plan executor
-			m_Executor = new PlanExecutor(m_Server);
-			// Start the plan executor
-			m_Executor.start();
+    /**
+     * Main entry point for the application
+     * @param args - Planner Arguments
+     */
+    public static void main(String[] args)
+    {
+        try
+        {
+            // Connect to the Asteroids server via RMI
+            m_Server = (QueryInterface) Naming.lookup("rmi://localhost/Query");
+            // Initialize the plan executor
+            m_Executor = new PlanExecutor(m_Server);
+            // Start the plan executor
+            m_Executor.start();
 
             m_Plan = new ArrayList<PlanAction>();
 
-			int iGameCount = 0;
-			do
-			{
-				try
-				{
-					// Update with the latest game data
-					m_GameData = m_Server.getGameData();
-					// Check to see if the game is over
-					if (m_GameData.isGameOver())
-					{
-						// TODO: Save out any relevant machine learning data
-						// TODO: Reset the planner
-						// TODO: Save out results (Score, etc.)
-						// Reset the game
-						m_Server.reset();
-						// Refresh the game data
-						m_GameData = m_Server.getGameData();
-						// Increment counter to know we just did another round
-						iGameCount++;
-						// Check counter to see if we have planned enough
-						if (iGameCount > GAMES_TO_PLAY)
-							// We are done planning
-							break;
-					}
-					// Execute the planner and set the plan
-                    if(m_Plan.isEmpty()) {
-                        m_Plan = determinePlan();
-	                    m_Executor.setPlan(m_Plan);
+            int iGameCount = 0;
+            do
+            {
+                try
+                {
+                    // Update with the latest game data
+                    m_GameData = m_Server.getGameData();
+                    // Check to see if the game is over
+                    if (m_GameData.isGameOver())
+                    {
+                        // TODO: Save out any relevant machine learning data
+                        // TODO: Reset the planner
+                        // TODO: Save out results (Score, etc.)
+                        // Reset the game
+                        m_Server.reset();
+                        // Refresh the game data
+                        m_GameData = m_Server.getGameData();
+                        // Increment counter to know we just did another round
+                        iGameCount++;
+                        // Check counter to see if we have planned enough
+                        if (iGameCount > GAMES_TO_PLAY)
+                            // We are done planning
+                            break;
                     }
-					Thread.sleep(1);
-				}
-				catch(Throwable t)
-				{
-					System.out.println("Main Loop(): " + t.getMessage());
-				}
-			}
-			while(true);
+                    // Execute the planner and set the plan
+                    m_Plan = determinePlan();
+                    m_Executor.setPlan(m_Plan);
+                    Thread.sleep(1);
+                }
+                catch(Throwable e)
+                {
+                    System.out.println("Main Loop(): " + e.getMessage());
+                }
+            }
+            while(true);
 
-			// Kill the plan executor
-			m_Executor.kill();
-			// Wait for the thread (5 seconds)
-			m_Executor.join(5000);
-		}
-		catch(Throwable t)
-		{
-			System.out.println("Main.main(): " + t.getMessage());
-		}
-	}
+            // Kill the plan executor
+            m_Executor.kill();
+            // Wait for the thread (5 seconds)
+            m_Executor.join(5000);
+        }
+        catch(Throwable e)
+        {
+            System.out.println("Main.main(): " + e.getMessage());
+        }
+    }
 
-	/**
-	 * Execute the planner to determine the best plan
-	 * @return Queue of planned actions
-	 */
-	//private static ConcurrentLinkedQueue<PlanAction> determinePlan()
+    /**
+     * Execute the planner to determine the best plan
+     * @return Queue of planned actions
+     */
+    //private static ConcurrentLinkedQueue<PlanAction> determinePlan()
     private static ArrayList<PlanAction> determinePlan()
-	{
-		ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
-		try
-		{
-			EntityData ship = m_GameData.getShipData();
-			ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
+    {
+        ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
+        try
+        {
+            EntityData ship = m_GameData.getShipData();
+            ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
 
-			Vector2 shippos = ship.getPosition();
+            Vector2 shippos = ship.getPosition();
 
             ArrayList<Float> occ_headings = new ArrayList<Float>();
             ArrayList<Boolean> safe_headings = new ArrayList<Boolean>();
 
-			//Calculate delta-V curve
-			int granularity = 1000; //per semicircle
-			float[] delta_theta = new float[2*granularity+1];
-			Vector2[] deltaV = new Vector2[delta_theta.length];
+            //Calculate delta-V curve
+            int granularity = 1000; //per semicircle
+            float[] delta_theta = new float[2*granularity+1];
+            Vector2[] deltaV = new Vector2[delta_theta.length];
 
             //Determine time step to examine - currently time required to do 180 degree turn and accelerate to 25% of max velocity
-			float delta_t = (float)(Math.PI / Ship.SHIP_ANGULAR_VELOCITY + 0.25f * Ship.SHIP_MAX_LINEAR_VELOCITY / Ship.SHIP_LINEAR_ACCELERATION);
+            float delta_t = (float)(Math.PI / Ship.SHIP_ANGULAR_VELOCITY + 0.25f * Ship.SHIP_MAX_LINEAR_VELOCITY / Ship.SHIP_LINEAR_ACCELERATION);
 
-			for(int ndx = 0; ndx < deltaV.length ; ndx++)
-			{
+            for(int ndx = 0; ndx < deltaV.length ; ndx++)
+            {
                 delta_theta[ndx] = (360.0f * ndx)/(2*granularity);
                 deltaV[ndx] = new Vector2(1f,0f);
                 deltaV[ndx].rotate(delta_theta[ndx]);
                 deltaV[ndx].scl(Ship.SHIP_LINEAR_ACCELERATION * (delta_t - (float)Math.toRadians(delta_theta[ndx] < 180 ? delta_theta[ndx] : Math.abs(delta_theta[ndx]-360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
             }
 
-			/*for(EntityData asteroid : asteroids)
-			{
-				Vector2 astpos = asteroid.getPosition();
-				Vector2 relpos = new Vector2(astpos);
-				relpos.sub(shippos);
+            for(EntityData asteroid : asteroids)
+            {
+                Vector2 astpos = asteroid.getPosition();
+                Vector2 relpos = new Vector2(astpos);
+                relpos.sub(shippos);
 
-				float config_radius = ship.getRadius() * (1.0f + SAFETY_FACTOR) + asteroid.getRadius();
-				Vector2[] occ_point = new Vector2[2];
-				Vector2 relv;
+                float config_radius = ship.getRadius() * (1.0f + SAFETY_FACTOR) + asteroid.getRadius();
+                Vector2[] occ_point = new Vector2[2];
+                Vector2 relv;
 
-				Vector2[] reachableV = new Vector2[deltaV.length];
-				float[] theta = new float[deltaV.length];
+                Vector2[] reachableV = new Vector2[deltaV.length];
+                float[] theta = new float[deltaV.length];
 
-				if(relpos.len() - config_radius < SAFE_DISTANCE)
-				{
-					//Calculate occlusion points
-					occ_point[0] = new Vector2(1f,0f);
-					occ_point[0].rotate((float)Math.toDegrees(-1*Math.asin(config_radius/relpos.len())));
-					occ_point[0].scl((float)(Math.sqrt(relpos.len() * relpos.len() - config_radius * config_radius)));
-					occ_point[1] = new Vector2(occ_point[0]);
-					occ_point[1].rotate((float)(Math.toDegrees(2*Math.asin(config_radius/relpos.len()))));
+                if(relpos.len() - config_radius < SAFE_DISTANCE)
+                {
+                    //Calculate occlusion points
+                    float rotate_angle;
+                    float occ_len;
+                    if(config_radius > relpos.len()) {
+                        rotate_angle = 90.0f;
+                        occ_len = config_radius;
+                    } else {
+                        rotate_angle = (float)Math.toDegrees(Math.asin(config_radius/relpos.len()));
+                        occ_len = (float)(Math.sqrt(relpos.len() * relpos.len() - config_radius * config_radius));
+                    }
+                    occ_point[0] = new Vector2(1f,0f);
+                    occ_point[0].rotate(-1*rotate_angle);
+                    occ_point[0].scl(occ_len);
+                    occ_point[1] = new Vector2(occ_point[0]);
+                    occ_point[1].rotate(2*rotate_angle);
 
-					//Calculate relative velocity
-					relv = new Vector2(asteroid.getVelocity());
-					relv.sub(ship.getVelocity());
+                    //Calculate relative velocity
+                    relv = new Vector2(asteroid.getVelocity());
+                    relv.sub(ship.getVelocity());
 
-					//Add delta-V curve to relative velocity
-					for(int ndx = 0; ndx < deltaV.length; ndx++)
-					{
-						reachableV[ndx] = deltaV[ndx].cpy().rotate(ship.getAngle()).add(relv);
-						theta[ndx] = reachableV[ndx].angle();
-					}
+                    //Add delta-V curve to relative velocity
+                    for(int ndx = 0; ndx < deltaV.length; ndx++)
+                    {
+                        reachableV[ndx] = deltaV[ndx].cpy().rotate(ship.getAngle()).add(relv);
+                        theta[ndx] = reachableV[ndx].angle();
+                    }
 
-					//Determine excluded headings from delta-V curve based on occlusion points of velocity obstacle
-					//Excluded headings come from intersection of occlusion point rays with curve - rays are theta = constant
-					//Find thetas on delta-V curve bracketing ray theta, interval bisection to find intersection vector
-					//Up to 4 intersections per ray (0-8 per obstacle)
+                    //Determine excluded headings from delta-V curve based on occlusion points of velocity obstacle
+                    //Excluded headings come from intersection of occlusion point rays with curve - rays are theta = constant
+                    //Find thetas on delta-V curve bracketing ray theta, interval bisection to find intersection vector
+                    //Up to 4 intersections per ray (0-8 per obstacle)
 
                     ArrayList<Float> occ_intersect = new ArrayList<Float>();
 
@@ -175,22 +182,36 @@ public class Main
                         }
                     }
 
-                    // Locate crossings by finding sign changes of theta - occlusion_theta
-                    float prev;
-                    for(int occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
-                        prev = Math.signum(theta_diff[occ_ndx][0]);
-                        for(int ndx = 0; ndx < theta_diff.length; ndx++) {
-                            if(theta_diff[occ_ndx][ndx] == 0) {
-                                occ_intersect.add(new Float(delta_theta[ndx]));
-                            } else if(Math.signum(theta_diff[occ_ndx][ndx]) != prev) {
-                                //TODO: Convert to zero-finding with interval bisection
-                                float interp = (delta_theta[ndx] - delta_theta[ndx-1]) / (theta_diff[occ_ndx][ndx] - theta_diff[occ_ndx][ndx-1]) * theta_diff[occ_ndx][ndx] + delta_theta[ndx];
-                                occ_intersect.add(new Float(interp));
+                    int occ_ndx = 0;
+                    int ndx2 = 0;
+                    float prev = 0.0f;
+                    try {
+                        // Locate crossings by finding sign changes of theta - occlusion_theta
+                        for(occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
+                            prev = Math.signum(theta_diff[occ_ndx][0]);
+                            for(ndx2 = 0; ndx2 < theta_diff.length; ndx2++) {
+                                if(theta_diff[occ_ndx][ndx2] == 0) {
+                                    occ_intersect.add(new Float(delta_theta[ndx2]));
+                                } else if(Math.signum(theta_diff[occ_ndx][ndx2]) != prev) {
+                                    //TODO: Convert to zero-finding with interval bisection
+                                    float interp = (delta_theta[ndx2] - delta_theta[ndx2-1]) / (theta_diff[occ_ndx][ndx2] - theta_diff[occ_ndx][ndx2-1]) * theta_diff[occ_ndx][ndx2] + delta_theta[ndx2];
+                                    occ_intersect.add(new Float(interp));
+                                }
+                                prev = Math.signum(theta_diff[occ_ndx][ndx2]);
                             }
-                            prev = Math.signum(theta_diff[occ_ndx][ndx]);
                         }
+                    } catch(Throwable e) {
+                        System.out.println("Zero crossing exception: " + e.getMessage());
+                        System.out.println("Asteroid pos: " + asteroid.getPosition());
+                        System.out.println("Prev: " + prev);
+                        System.out.println("occ_ndx: " + occ_ndx);
+                        System.out.println("ndx2: " + ndx2);
+                        System.out.println("theta_diff[0]: " + theta_diff[occ_ndx][0]);
+                        System.out.println("theta_diff[ndx2]: " + theta_diff[occ_ndx][ndx2]);
+                        System.out.println("occ_point: " + occ_point[occ_ndx].x + "," + occ_point[occ_ndx].y + "," + occ_point[occ_ndx].angle());
+                        System.out.println("relpos: " + relpos.x + "," + relpos.y + "," + relpos.angle());
                     }
-
+/*
                     //Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
                     //rather than simplistic heading exclusion
 
@@ -256,33 +277,44 @@ public class Main
                     }
 
                     occ_headings = new_headings;
-                    safe_headings = new_safe;
-				}
-			}    */
+                    safe_headings = new_safe;*/
+                }
+            }
 
-			//Select heading somehow - right now pick straight up
+            //Select heading somehow - right now pick straight up
             float target_h = 90.0f;
 
-			//Determine combination of turning and thrusting to achieve that heading
+            //Determine combination of turning and thrusting to achieve that heading
 
-            float turn_angle = target_h - ship.getAngle();
-            float turn_time = (float)Math.toRadians(turn_angle) / Ship.SHIP_ANGULAR_VELOCITY;
+            float turn_angle = target_h - (float)Math.toDegrees(ship.getAngle()); //ship angle is in radians you dumb fuck
+            float turn_time = (float)Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
             float burntime = delta_t - turn_time;
             PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
             PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
 
-            long start_time = System.currentTimeMillis(); //Start 0.1 seconds after now
+            long start_time = System.currentTimeMillis(); //Start now
 
+            //System.out.println(turn_angle + "," + turn_time);
+
+            plan.add(new PlanAction(start_time, PlanAction.Action.fire));
+            plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+            plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+            plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
             plan.add(new PlanAction(start_time, turnstart));
             plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
-            /*plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
-            plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));  */
-		}
-		catch(Throwable t)
-		{
-			System.out.println("DeterminePlan(): " + t.getMessage());
-		}
-		// Return the plan
-		return plan;
-	}
+            if(turn_angle > 5.0f) {
+                plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
+                plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
+            } else {
+                plan.add(new PlanAction(start_time, PlanAction.Action.startForward));
+                plan.add(new PlanAction(start_time + (long)(delta_t*1000), PlanAction.Action.stopForward));
+            }
+        }
+        catch(Throwable t)
+        {
+            System.out.println("DeterminePlan(): " + t.getMessage());
+        }
+        // Return the plan
+        return plan;
+    }
 }

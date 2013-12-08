@@ -1,5 +1,6 @@
 import com.badlogic.gdx.math.Vector2;
 import com.planner.*;
+import com.planner.machinelearning.DecisionTree;
 import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
@@ -24,6 +25,7 @@ public class Main
     private static GameData			m_GameData;
     private static ArrayList<PlanAction> m_Plan;
     private static ArrayList<Metrics> m_Metrics;
+	private static DecisionTree m_DecisionTree;
 
     /**
      * Main entry point for the application
@@ -40,10 +42,19 @@ public class Main
             // Start the plan executor
             m_Executor.start();
 
+	        // Initialize the decision tree for the machine learning
+	        m_DecisionTree = new DecisionTree();
+	        m_DecisionTree.printTree();
+	        m_DecisionTree.train(true, 0.0f, 0.0f, 0.0f, true);
+	        m_DecisionTree.train(true, 1.0f, 0.0f, 0.0f, true);
+	        m_DecisionTree.train(true, 4.0f, 0.0f, 0.0f, false);
+	        m_DecisionTree.train(true, 3.0f, 0.0f, 0.0f, false);
+	        m_DecisionTree.printTree();
+
             m_Plan = new ArrayList<PlanAction>();
             m_Metrics = new ArrayList<Metrics>();
 
-            int iGameCount = 0;
+            int iGameCount = 1;
             do
             {
                 try

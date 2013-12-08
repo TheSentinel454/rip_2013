@@ -9,8 +9,6 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.rip.javasteroid.engine.AsteroidEngine;
 import com.rip.javasteroid.util.TextureWrapper;
 
-import java.io.Serializable;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Luke
@@ -49,11 +47,11 @@ public abstract class BaseEntity
 	/**
 	 * Create a m_Body based on the position, angle, and m_Body type specified
 	 * @param world World to use in creating the m_Body
-	 * @param pos
-	 * @param angle
-	 * @param bodyType
+	 * @param pos Position of the body
+	 * @param angle Angle of the body
+	 * @param bodyType Body type to be created
 	 */
-	public void createBody(World world, Vector2 pos, float angle, BodyDef.BodyType bodyType)
+	public synchronized void createBody(World world, Vector2 pos, float angle, BodyDef.BodyType bodyType)
 	{
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = bodyType;
@@ -68,7 +66,7 @@ public abstract class BaseEntity
 	 * @param density Density of the fixture
 	 * @param restitution Restitution of the fixture
 	 */
-	protected void makeCircleFixture(float radius, float density, float restitution)
+	protected synchronized void makeCircleFixture(float radius, float density, float restitution)
 	{
 		m_Radius = radius;
 		FixtureDef fixtureDef = new FixtureDef();

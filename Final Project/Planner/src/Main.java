@@ -74,9 +74,9 @@ public class Main
                     }
 					Thread.sleep(1);
 				}
-				catch(Exception e)
+				catch(Throwable t)
 				{
-					System.out.println("Main Loop(): " + e.getMessage());
+					System.out.println("Main Loop(): " + t.getMessage());
 				}
 			}
 			while(true);
@@ -86,9 +86,9 @@ public class Main
 			// Wait for the thread (5 seconds)
 			m_Executor.join(5000);
 		}
-		catch(Exception e)
+		catch(Throwable t)
 		{
-			System.out.println("Main.main(): " + e.getMessage());
+			System.out.println("Main.main(): " + t.getMessage());
 		}
 	}
 

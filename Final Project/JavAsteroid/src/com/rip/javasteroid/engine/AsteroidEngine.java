@@ -94,77 +94,84 @@ public class AsteroidEngine implements Screen, ContactListener
 	@Override
 	public void render(float delta)
 	{
-		Gdx.gl.glClearColor(0, 0, 0, 1);
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-
-		m_DebugRenderer.render(m_World, m_Camera.combined);
-		m_SpriteBatch.begin();
-		for(Asteroid be: m_Asteroids)
-			be.draw(m_SpriteBatch);
-		m_Ship.draw(m_SpriteBatch);
-		if (m_GameOver)
-			m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
-		m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
-		m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
-		m_SpriteBatch.end();
-
-		for(Asteroid be: m_Asteroids)
-			be.update(delta);
-		m_Ship.update(delta);
-		m_GameData.updateShipData(m_Ship);
-		m_GameData.updateAsteroidData(m_Asteroids);
-		m_GameData.updateGameState(m_GameOver);
-		m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
-
-		// Handle any Asteroid collisions
-		synchronized (m_CollisionQueueLock)
+		try
 		{
-			BaseEntity entity;
-			while ((entity = m_CollisionQueue.poll()) != null)
+			Gdx.gl.glClearColor(0, 0, 0, 1);
+			Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+
+			m_DebugRenderer.render(m_World, m_Camera.combined);
+			m_SpriteBatch.begin();
+			for(Asteroid be: m_Asteroids)
+				be.draw(m_SpriteBatch);
+			m_Ship.draw(m_SpriteBatch);
+			if (m_GameOver)
+				m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
+			m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
+			m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
+			m_SpriteBatch.end();
+
+			for(Asteroid be: m_Asteroids)
+				be.update(delta);
+			m_Ship.update(delta);
+			m_GameData.updateShipData(m_Ship);
+			m_GameData.updateAsteroidData(m_Asteroids);
+			m_GameData.updateGameState(m_GameOver);
+			m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
+
+			// Handle any Asteroid collisions
+			synchronized (m_CollisionQueueLock)
 			{
-				if (entity instanceof Asteroid)
-					destroyAsteroid((Asteroid)entity);
-				else if (entity instanceof Ship)
+				BaseEntity entity;
+				while ((entity = m_CollisionQueue.poll()) != null)
 				{
-					// Take a life
-					if (m_GameData.takeLife())
+					if (entity instanceof Asteroid)
+						destroyAsteroid((Asteroid)entity);
+					else if (entity instanceof Ship)
 					{
-						// Game over
-						m_GameOver = true;
-						m_Timer.cancel();
+						// Take a life
+						if (m_GameData.takeLife())
+						{
+							// Game over
+							m_GameOver = true;
+							m_Timer.cancel();
+						}
+						entity.destroy();
 					}
-					entity.destroy();
+					else if (entity instanceof Bullet)
+						entity.destroy();
 				}
-				else if (entity instanceof Bullet)
-					entity.destroy();
 			}
-		}
-		synchronized (m_NewAsteroid)
-		{
+			synchronized (m_NewAsteroid)
+			{
+				// See if we need to create another asteroid
+				if (m_NewAsteroid)
+				{
+					// Generate a new asteroid
+					generateNewAsteroid();
+					// Flip the flag again
+					m_NewAsteroid = false;
+				}
+			}
 			// See if we need to create another asteroid
-			if (m_NewAsteroid)
+			synchronized (m_NewBullet)
 			{
-				// Generate a new asteroid
-				generateNewAsteroid();
-				// Flip the flag again
-				m_NewAsteroid = false;
+				if (m_NewBullet)
+				{
+					// Generate a new bullet
+					m_Ship.fire();
+					// Flip the flag again
+					m_NewBullet = false;
+				}
+			}
+			synchronized (m_Reset)
+			{
+				if (m_Reset)
+					reset();
 			}
 		}
-		// See if we need to create another asteroid
-		synchronized (m_NewBullet)
+		catch (Throwable t)
 		{
-			if (m_NewBullet)
-			{
-				// Generate a new bullet
-				m_Ship.fire();
-				// Flip the flag again
-				m_NewBullet = false;
-			}
-		}
-		synchronized (m_Reset)
-		{
-			if (m_Reset)
-				reset();
+			System.out.println("AsteroidEngine.render(): " + t.getMessage());
 		}
 	}
 

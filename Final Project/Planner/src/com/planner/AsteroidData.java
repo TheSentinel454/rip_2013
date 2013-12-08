@@ -14,13 +14,13 @@ package com.planner;
 //Crossed during slew maneuver?
 
 public class AsteroidData {
-    private float distance;
-    private float impactTime;
-    private float angle;
+    private float distance; //distance to asteroid
+    private float impactTime; //time to asteroid impact
+    private float angle; //angle from front of ship to asteroid
     private boolean inRange;
     private boolean transit;
 
-    public AsteroidData(float distance, float impactTime, float angle) {
+    public AsteroidData(float distance, float angle, float impactTime) {
         this.distance = distance;
         this.impactTime = impactTime;
         this.angle = angle;

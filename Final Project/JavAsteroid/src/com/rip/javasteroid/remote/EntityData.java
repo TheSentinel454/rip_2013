@@ -94,7 +94,7 @@ public class EntityData implements Serializable
         while(this.m_Angle < 0.0f) {
             this.m_Angle += 360.0f;
         }
-        while(this.m_Angle > 360.0f) {
+        while(this.m_Angle >= 360.0f) {
             this.m_Angle -= 360.0f;
         }
 		this.m_Radius = entity.getRadius();

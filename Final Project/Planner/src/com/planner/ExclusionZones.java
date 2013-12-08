@@ -24,6 +24,7 @@ public class ExclusionZones {
             ExcludePoint[] add = addList.toArray(new ExcludePoint[addList.size()]);
 
             ArrayList<ExcludePoint> newList = new ArrayList<ExcludePoint>();
+            ExcludePoint lastPoint = null;
 
             int exist_ndx = 0;
             int add_ndx = 0;
@@ -43,15 +44,19 @@ public class ExclusionZones {
                     add_ndx++;
                 }
 
-                //Collapse redundant headings
-                newPoint = minPoint.merge(newPoint);
-
-                //Add to list if necessary
-                newList.add(minPoint);
-                if(newPoint != null) {
-                    newList.add(newPoint);
+                if(lastPoint == null) {
+                    lastPoint = newPoint;
+                } else {
+                    //Collapse redundant headings
+                    newPoint = lastPoint.merge(newPoint);
+                    //Add to list if necessary
+                    if(newPoint != null) {
+                        newList.add(lastPoint);
+                        lastPoint = newPoint;
+                    }
                 }
             }
+            newList.add(lastPoint);
             this.exclusions = newList;
         }
     }

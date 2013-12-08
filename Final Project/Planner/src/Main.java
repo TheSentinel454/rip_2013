@@ -104,12 +104,13 @@ public class Main
             EntityData ship = m_GameData.getShipData();
             ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
 
-            SAFETY_FACTOR = 0.05f;
+            SAFETY_FACTOR = 0.20f;
             SAFE_DISTANCE = 10.0f * Ship.SHIP_MAX_LINEAR_VELOCITY;
 
             Metrics new_met = new Metrics(pullTime);
 
             //Calculate safe/unsafe headings
+            //TODO: Update delta-t based on asteroid proximity (time to impact)
             ExclusionZones exclusions = calculateExclusions(ship, asteroids, new_met);
 
             //Select heading
@@ -119,7 +120,7 @@ public class Main
             //Determine combination of turning and thrusting to achieve that heading
             calculatePlan(plan, ship, asteroids, exclusions, target_h, pullTime);
 
-            m_Metrics.add(getMetrics(ship, asteroids, exclusions, target_h, plan));
+            //m_Metrics.add(getMetrics(ship, asteroids, exclusions, target_h, plan));
 
             //Shift plan times to account for execution time
             long planDiff = System.currentTimeMillis() - pullTime;
@@ -153,7 +154,6 @@ public class Main
 
         float shipAngle = ship.getAngle();
 
-        System.out.println("New search");
         for(EntityData asteroid : asteroids)
         {
             Vector2 relpos = new Vector2(asteroid.getPosition());
@@ -168,7 +168,6 @@ public class Main
 
             if(relpos.len() - config_radius < SAFE_DISTANCE)
             {
-                System.out.println("Asteroid in range!");
                 //Calculate occlusion points
                 float rotate_angle;
                 float occ_len;
@@ -180,19 +179,22 @@ public class Main
                     occ_len = (float)(Math.sqrt(relpos.len() * relpos.len() - config_radius * config_radius));
                 }
                 occ_point[0] = new Vector2(1f,0f);
-                occ_point[0].rotate(-1*rotate_angle);
+                occ_point[0].rotate(relpos.angle() - rotate_angle);
                 occ_point[0].scl(occ_len);
                 occ_point[1] = new Vector2(occ_point[0]);
                 occ_point[1].rotate(2*rotate_angle);
 
                 //Calculate relative velocity
-                relv = new Vector2(asteroid.getVelocity());
-                relv.sub(ship.getVelocity());
+                relv = new Vector2(ship.getVelocity());
+                relv.sub(asteroid.getVelocity());
 
                 //Add delta-V curve to relative velocity
                 for(int ndx = 0; ndx < deltaV.length; ndx++)
                 {
-                    reachableV[ndx] = deltaV[ndx].cpy().rotate(shipAngle).add(relv);
+                    reachableV[ndx] = new Vector2(deltaV[ndx]);
+                    reachableV[ndx].rotate(shipAngle);
+                    reachableV[ndx].add(relv);
+                    //TODO: fix for max speed issues
                     theta[ndx] = reachableV[ndx].angle();
                 }
 
@@ -209,33 +211,29 @@ public class Main
                 for(int ndx = 0; ndx < theta.length; ndx++) {
                     for(int occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
                         theta_diff[occ_ndx][ndx] = theta[ndx] - occ_point[occ_ndx].angle();
-                    }
-                }
-
-                // Locate crossings by finding sign changes of theta - occlusion_theta
-                for(int occ_ndx = 0; occ_ndx < 2; occ_ndx++) {
-                    float prev = Math.signum(theta_diff[occ_ndx][0]);
-                    for(int ndx = 0; ndx < theta_diff.length; ndx++) {
-                        if(theta_diff[occ_ndx][ndx] == 0) {
+                        // Locate crossings by finding sign changes of theta - occlusion_theta
+                        if(theta_diff[occ_ndx][ndx] == 0.0f) {
                             occ_intersect.add(delta_theta[ndx]);
-                        } else if(Math.signum(theta_diff[occ_ndx][ndx]) != prev) {
+                        } else if(ndx > 0 && theta_diff[occ_ndx][ndx] * theta_diff[occ_ndx][ndx-1] < 0.0f) {
                             //TODO: Convert to zero-finding with interval bisection
                             float interp = (delta_theta[ndx] - delta_theta[ndx-1]) / (theta_diff[occ_ndx][ndx] - theta_diff[occ_ndx][ndx-1]) * theta_diff[occ_ndx][ndx] + delta_theta[ndx];
                             occ_intersect.add(interp);
                         }
-                        prev = Math.signum(theta_diff[occ_ndx][ndx]);
                     }
                 }
 
                 //Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
                 //rather than simplistic heading exclusion
 
-                if(occ_intersect.isEmpty() || occ_intersect.get(occ_intersect.size()-1) != 360.0f) {
+                if(occ_intersect.isEmpty()) {
                     occ_intersect.add(360.0f);
                 }
 
                 //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
                 Collections.sort(occ_intersect);
+                if(occ_intersect.get(occ_intersect.size()-1) != 360.0f) {
+                    occ_intersect.add(360.0f);
+                }
 
                 ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
 
@@ -250,16 +248,14 @@ public class Main
                     dv.rotate(shipAngle).add(relv);
 
                     ang = occ_point[1].angle() - dv.angle() + ((occ_point[1].angle() - dv.angle() >= 0) ? (0) : (360.0f));
-                    ang += dv.angle() - occ_point[1].angle() + ((dv.angle() - occ_point[1].angle() >= 0) ? (0) : (360.0f));
+                    ang += dv.angle() - occ_point[0].angle() + ((dv.angle() - occ_point[0].angle() >= 0) ? (0) : (360.0f));
 
                     //Safe if sum of angles is greater than angle between occlusion points
                     new_excludes.add(new ExcludePoint(occ_intersect.get(ndx),ang > inc_angle));
                 }
 
                 //Merge new exclusion headings with existing
-                System.out.println(exclusions.size());
                 exclusions.addAll(new_excludes);
-                System.out.println(exclusions.size());
 
             }
         }
@@ -267,23 +263,23 @@ public class Main
     }
 
     private static float selectHeading(EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions) {
-        return exclusions.findClosestSafeHeading(ship.getAngle());
+        return exclusions.findClosestSafeHeading(0.0f);
     }
 
     private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time) {
-        float turn_angle = target_h - ship.getAngle();
+        float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
         float turn_time = (float)Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
         float burntime = DELTA_T - turn_time;
         PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
         PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
 
-        plan.add(new PlanAction(start_time, PlanAction.Action.fire));
+        //plan.add(new PlanAction(start_time, PlanAction.Action.fire));
         plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
         plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
         plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
         plan.add(new PlanAction(start_time, turnstart));
         plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
-        if(turn_angle > 5.0f) {
+        if(Math.abs(turn_angle) > 1.0f) {
             plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
             plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
         } else {

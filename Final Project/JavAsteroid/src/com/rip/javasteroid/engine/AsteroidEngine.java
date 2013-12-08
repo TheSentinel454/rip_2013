@@ -101,8 +101,11 @@ public class AsteroidEngine implements Screen, ContactListener
 
 			m_DebugRenderer.render(m_World, m_Camera.combined);
 			m_SpriteBatch.begin();
-			for(Asteroid be: m_Asteroids)
-				be.draw(m_SpriteBatch);
+			synchronized (m_Asteroids)
+			{
+				for(Asteroid be: m_Asteroids)
+					be.draw(m_SpriteBatch);
+			}
 			m_Ship.draw(m_SpriteBatch);
 			if (m_GameOver)
 				m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
@@ -110,11 +113,14 @@ public class AsteroidEngine implements Screen, ContactListener
 			m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
 			m_SpriteBatch.end();
 
-			for(Asteroid be: m_Asteroids)
-				be.update(delta);
+			synchronized (m_Asteroids)
+			{
+				for(Asteroid be: m_Asteroids)
+					be.update(delta);
+				m_GameData.updateAsteroidData(m_Asteroids);
+			}
 			m_Ship.update(delta);
 			m_GameData.updateShipData(m_Ship);
-			m_GameData.updateAsteroidData(m_Asteroids);
 			m_GameData.updateGameState(m_GameOver);
 			m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
 
@@ -268,15 +274,18 @@ public class AsteroidEngine implements Screen, ContactListener
 	 */
 	private void removeAsteroid(Asteroid asteroid)
 	{
-		// Sift through the Asteroids
-		for(int i = 0; i < m_Asteroids.size(); i++)
+		synchronized (m_Asteroids)
 		{
-			// Check the IDs to see if they match
-			if (m_Asteroids.get(i).getID() == asteroid.getID())
+			// Sift through the Asteroids
+			for(int i = 0; i < m_Asteroids.size(); i++)
 			{
-				// Remove the asteroid
-				m_Asteroids.remove(i);
-				break;
+				// Check the IDs to see if they match
+				if (m_Asteroids.get(i).getID() == asteroid.getID())
+				{
+					// Remove the asteroid
+					m_Asteroids.remove(i);
+					break;
+				}
 			}
 		}
 	}
@@ -321,10 +330,13 @@ public class AsteroidEngine implements Screen, ContactListener
 		// Make sure the game is over
 		if (m_GameOver)
 		{
-			// Clear the Asteroids
-			for(Asteroid asteroid: m_Asteroids)
-				m_World.destroyBody(asteroid.getBody());
-			m_Asteroids.clear();
+			synchronized (m_Asteroids)
+			{
+				// Clear the Asteroids
+				for(Asteroid asteroid: m_Asteroids)
+					m_World.destroyBody(asteroid.getBody());
+				m_Asteroids.clear();
+			}
 
 			// Reset the ship
 			m_Ship.reset();
@@ -404,8 +416,11 @@ public class AsteroidEngine implements Screen, ContactListener
 				x = AsteroidEngine.WIDTH;
 				break;
 		}
-		// Create and add the new asteroid
-		m_Asteroids.add(new Asteroid(new Vector2(x, y), Asteroid.AsteroidSize.Large, m_World));
+		synchronized (m_Asteroids)
+		{
+			// Create and add the new asteroid
+			m_Asteroids.add(new Asteroid(new Vector2(x, y), Asteroid.AsteroidSize.Large, m_World));
+		}
 		System.out.println("Added new Asteroid!");
 	}
 

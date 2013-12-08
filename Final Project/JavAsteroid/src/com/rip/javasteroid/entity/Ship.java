@@ -117,9 +117,12 @@ public class Ship extends BaseEntity
 	@Override
 	public void draw(SpriteBatch sp)
 	{
-		// Draw the bullets
-		for(Bullet bullet: m_Bullets)
-			bullet.draw(sp);
+		synchronized (m_Bullets)
+		{
+			// Draw the bullets
+			for(Bullet bullet: m_Bullets)
+				bullet.draw(sp);
+		}
 		// Draw the texture differently if we are not active
 		if (!m_Active)
 			m_Texture.draw(sp, 0.5f);
@@ -183,19 +186,22 @@ public class Ship extends BaseEntity
 	 */
 	private void updateBullets(float dt)
 	{
-		// Iterate through the bullets and update
-		for(int i = m_Bullets.size() - 1; i >= 0; i--)
+		synchronized (m_Bullets)
 		{
-			// Update the bullet
-			m_Bullets.get(i).update(dt);
-			// Is the bullet dead?
-			if (m_Bullets.get(i).isDead())
+			// Iterate through the bullets and update
+			for(int i = m_Bullets.size() - 1; i >= 0; i--)
 			{
-				m_World.destroyBody(m_Bullets.get(i).getBody());
-				// Dispose the bullet
-				m_Bullets.get(i).dispose();
-				// Remove the bullet from the list
-				m_Bullets.remove(i);
+				// Update the bullet
+				m_Bullets.get(i).update(dt);
+				// Is the bullet dead?
+				if (m_Bullets.get(i).isDead())
+				{
+					m_World.destroyBody(m_Bullets.get(i).getBody());
+					// Dispose the bullet
+					m_Bullets.get(i).dispose();
+					// Remove the bullet from the list
+					m_Bullets.remove(i);
+				}
 			}
 		}
 	}
@@ -235,8 +241,11 @@ public class Ship extends BaseEntity
 			velocity.nor();
 			velocity.scl(Bullet.BULLET_VELOCITY);
 			Bullet bullet = new Bullet(m_Body.getPosition(), velocity, m_World);
-			// Add to the list
-			m_Bullets.add(bullet);
+			synchronized (m_Bullets)
+			{
+				// Add to the list
+				m_Bullets.add(bullet);
+			}
 			// Start cool down
 			m_AbleToShoot = false;
 			m_Cooldown = FIRE_COOLDOWN;

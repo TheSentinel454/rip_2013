@@ -98,7 +98,10 @@ public class GameData implements Serializable
 	 */
 	public Boolean getTurningRight()
 	{
-		return m_TurningRight;
+		synchronized (m_ShipData)
+		{
+			return m_TurningRight;
+		}
 	}
 
 	/**
@@ -107,7 +110,10 @@ public class GameData implements Serializable
 	 */
 	public Boolean getTurningLeft()
 	{
-		return m_TurningLeft;
+		synchronized (m_ShipData)
+		{
+			return m_TurningLeft;
+		}
 	}
 
 	/**
@@ -116,7 +122,10 @@ public class GameData implements Serializable
 	 */
 	public Boolean getMovingForward()
 	{
-		return m_MovingForward;
+		synchronized (m_ShipData)
+		{
+			return m_MovingForward;
+		}
 	}
 
 	/**

@@ -90,6 +90,13 @@ public class EntityData implements Serializable
 		this.m_Position = entity.getBody().getPosition();
 		this.m_Velocity = entity.getBody().getLinearVelocity();
 		this.m_Angle = entity.getBody().getAngle();
+        this.m_Angle = (float)Math.toDegrees(this.m_Angle);
+        while(this.m_Angle < 0.0f) {
+            this.m_Angle += 360.0f;
+        }
+        while(this.m_Angle > 360.0f) {
+            this.m_Angle -= 360.0f;
+        }
 		this.m_Radius = entity.getRadius();
 	}
 

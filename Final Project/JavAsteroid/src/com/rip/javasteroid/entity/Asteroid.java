@@ -168,9 +168,16 @@ public class Asteroid extends BaseEntity
 		// See if we have anything to do
 		if (newSize != null)
 		{
-			// Create and add the new asteroid
-			JavAsteroid.getEngine().addAsteroid(new Asteroid(m_Body.getPosition(), newSize, m_World));
-			JavAsteroid.getEngine().addAsteroid(new Asteroid(m_Body.getPosition(), newSize, m_World));
+			try
+			{
+				// Create and add the new asteroid
+				JavAsteroid.getEngine().addAsteroid(new Asteroid(m_Body.getPosition(), newSize, m_World));
+				JavAsteroid.getEngine().addAsteroid(new Asteroid(m_Body.getPosition(), newSize, m_World));
+			}
+			catch(Throwable t)
+			{
+				System.out.println("Asteroid.generateNewAsteroids(): " + t.getMessage());
+			}
 		}
 	}
 }

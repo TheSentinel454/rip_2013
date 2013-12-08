@@ -27,6 +27,21 @@ public class Metrics {
         asteroidMetrics.add(newAst);
     }
 
+    public void addPlanMetrics(Vector2 pos, Vector2 vel, float turn_angle) {
+        this.position = pos;
+        this.velocity = vel;
+
+        boolean transit;
+        for(AsteroidData ast : asteroidMetrics) {
+            if(turn_angle >= 0.0f) {
+                transit = ast.getAngle() < turn_angle;
+            } else {
+                transit = ast.getAngle() > (turn_angle + 360.0f);
+            }
+            ast.setTransit(transit);
+        }
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -45,5 +60,9 @@ public class Metrics {
 
     public ArrayList<AsteroidData> getAsteroidMetrics() {
         return asteroidMetrics;
+    }
+
+    public void setPercent_safe(float percent_safe) {
+        this.percent_safe = percent_safe;
     }
 }

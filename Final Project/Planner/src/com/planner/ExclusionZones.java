@@ -82,4 +82,13 @@ public class ExclusionZones {
     public int size() {
         return exclusions.size();
     }
+
+    public float getPercentSafe() {
+        float percentSafe = 0.0f;
+        for(int ndx = 0; ndx < exclusions.size(); ndx++) {
+            float arcSize = exclusions.get(ndx).getHeading() - ((ndx > 0) ? (exclusions.get(ndx-1).getHeading()) : (0.0f));
+            percentSafe += (arcSize * ((exclusions.get(ndx).isSafe()) ? (1.0f) : (0.0f))) / 360.0f;
+        }
+        return percentSafe;
+    }
 }

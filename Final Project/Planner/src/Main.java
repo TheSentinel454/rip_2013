@@ -95,8 +95,7 @@ public class Main
      * @return Queue of planned actions
      */
     //private static ConcurrentLinkedQueue<PlanAction> determinePlan()
-    private static ArrayList<PlanAction> determinePlan()
-    {
+    private static ArrayList<PlanAction> determinePlan() {
         ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
         try
         {
@@ -114,6 +113,7 @@ public class Main
 
             float target_h;
 
+            //Safe distance gets decreased each time search fails to find target heading
             do {
                 SAFE_DISTANCE = SAFE_DISTANCE * 0.50f;
 
@@ -124,12 +124,14 @@ public class Main
                 target_h = selectHeading(ship, asteroids, exclusions);
                 System.out.println(target_h);
             } while(target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
+            //Don't let safe distance become arbitrarily small
 
+            //Do nothing if no safe heading found - going to crash anyway
             if(target_h >= 0.0f) {
                 //Determine combination of turning and thrusting to achieve that heading
-                calculatePlan(plan, ship, asteroids, exclusions, target_h, pullTime);
+                calculatePlan(plan, ship, asteroids, exclusions, target_h, pullTime, new_met);
 
-                //m_Metrics.add(getMetrics(ship, asteroids, exclusions, target_h, plan));
+                m_Metrics.add(new_met);
 
                 //Shift plan times to account for execution time
                 long planDiff = System.currentTimeMillis() - pullTime;
@@ -340,6 +342,10 @@ public class Main
 
             }
         }
+
+        //Calculate safe percentage of headings
+        metrics.setPercent_safe(exclusions.getPercentSafe());
+
         return exclusions;
     }
 
@@ -347,7 +353,7 @@ public class Main
         return exclusions.findClosestSafeHeading(0.0f);
     }
 
-    private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time) {
+    private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics) {
         float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
         float turn_time = (float)Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
         float burntime = DELTA_T - turn_time;
@@ -360,16 +366,37 @@ public class Main
         plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
         plan.add(new PlanAction(start_time, turnstart));
         plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
-        if(Math.abs(turn_angle) > 1.0f) {
+        if(Math.abs(turn_angle) > 1.0f) { //If already close to heading, just keep burning
             plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
             plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
         } else {
             plan.add(new PlanAction(start_time, PlanAction.Action.startForward));
             plan.add(new PlanAction(start_time + (long)(DELTA_T *1000), PlanAction.Action.stopForward));
         }
-    }
 
-    private static Metrics getMetrics(EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, ArrayList<PlanAction> plan) {
-        return null;
+        Vector2 newV = new Vector2(1.0f, 0.0f);
+        newV.rotate(ship.getAngle() + turn_angle);
+        newV.scl(burntime * Ship.SHIP_LINEAR_ACCELERATION);
+        if(newV.len() > Ship.SHIP_MAX_LINEAR_VELOCITY) {
+            newV.nor();
+            newV.scl(Ship.SHIP_MAX_LINEAR_VELOCITY);
+        }
+        newV.add(ship.getVelocity());
+
+        Vector2 newPos = new Vector2(ship.getPosition());
+
+        //Change in position during turn
+        Vector2 deltaPos = new Vector2(ship.getVelocity());
+        deltaPos.scl(turn_time);
+        newPos.add(deltaPos);
+
+        //Change in position during burn - assumes at final velocity for entire burn
+        deltaPos = new Vector2(newV);
+        deltaPos.scl(burntime);
+        newPos.add(deltaPos);
+
+        //TODO: fix final position calculation
+
+        metrics.addPlanMetrics(newPos, newV, turn_angle);
     }
 }

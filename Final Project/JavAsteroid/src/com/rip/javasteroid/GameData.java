@@ -17,8 +17,8 @@ public class GameData implements Serializable
 {
 	/* Private Attributes */
 	private Boolean m_GameOver = false;
-	private Integer m_Width = 0;
-	private Integer m_Height = 0;
+	private final Integer m_Width;
+	private final Integer m_Height;
 	private Integer m_Score = 0;
 	private Integer m_Lives = 3;
 	private EntityData m_ShipData;

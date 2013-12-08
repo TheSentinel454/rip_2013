@@ -18,6 +18,7 @@ public class Main
     private static float SAFETY_FACTOR;
     private static float DELTA_T;
     private static float HEADING_RANGE;
+    private static float WRAP_MARGIN = 10.0f;
 
     /* Private Attributes */
     private static QueryInterface	m_Server;
@@ -74,9 +75,10 @@ public class Main
                         // Increment counter to know we just did another round
                         iGameCount++;
                         // Check counter to see if we have planned enough
-                        if (iGameCount > GAMES_TO_PLAY)
+                        if (iGameCount > GAMES_TO_PLAY) {
                             // We are done planning
                             break;
+                        }
                     }
                     // Execute the planner and set the plan
                     m_Plan = determinePlan();
@@ -105,7 +107,6 @@ public class Main
      * Execute the planner to determine the best plan
      * @return Queue of planned actions
      */
-    //private static ConcurrentLinkedQueue<PlanAction> determinePlan()
     private static ArrayList<PlanAction> determinePlan() {
         ArrayList<PlanAction> plan = new ArrayList<PlanAction>();
         try
@@ -113,6 +114,8 @@ public class Main
             long pullTime = System.currentTimeMillis();
             EntityData ship = m_GameData.getShipData();
             ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
+
+            wrapScreen(asteroids);
 
             ExclusionZones exclusions;
 
@@ -133,7 +136,6 @@ public class Main
 
                 //Select heading
                 target_h = selectHeading(ship, asteroids, exclusions);
-                System.out.println(target_h);
             } while(target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
             //Don't let safe distance become arbitrarily small
 
@@ -157,6 +159,59 @@ public class Main
         }
         // Return the plan
         return plan;
+    }
+
+    private static void wrapScreen(ArrayList<EntityData> asteroids) {
+        ArrayList<EntityData> wrapped_asteroids = new ArrayList<EntityData>();
+
+        for(EntityData ast : asteroids) {
+            float world_width = m_GameData.getWidth() + 2 * ast.getRadius();
+            float world_height = m_GameData.getHeight() + 2 * ast.getRadius();
+
+            boolean wrap_right = ast.getPosition().x > ((m_GameData.getWidth() / 2) - WRAP_MARGIN);
+            boolean wrap_left = ast.getPosition().x < (-1 * (m_GameData.getWidth() / 2) + WRAP_MARGIN);
+            boolean wrap_up = ast.getPosition().y > ((m_GameData.getHeight() / 2) - WRAP_MARGIN);
+            boolean wrap_down = ast.getPosition().y < (-1 * (m_GameData.getHeight() / 2) + WRAP_MARGIN);
+
+            Vector2 newPos;
+            if(wrap_right) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.sub(world_width, 0.0f);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+
+                if(wrap_up) {
+                    newPos.sub(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                } else if(wrap_down) {
+                    newPos.add(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                }
+            } else if(wrap_left) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.add(world_width, 0.0f);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+
+                if(wrap_up) {
+                    newPos.sub(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                } else if(wrap_down) {
+                    newPos.add(0.0f, world_height);
+                    wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+                }
+            }
+
+            if(wrap_up) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.sub(0.0f, world_height);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+            } else if(wrap_down) {
+                newPos = new Vector2(ast.getPosition());
+                newPos.add(0.0f, world_height);
+                wrapped_asteroids.add(new EntityData(new Vector2(newPos),new Vector2(ast.getVelocity()),ast.getAngle(),ast.getRadius()));
+            }
+        }
+
+        asteroids.addAll(wrapped_asteroids);
     }
 
     private static ExclusionZones calculateExclusions(EntityData ship, ArrayList<EntityData> asteroids, Metrics metrics) {
@@ -367,17 +422,35 @@ public class Main
     private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics) {
         float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
         float turn_time = (float)Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
-        float burntime = DELTA_T - turn_time;
-        PlanAction.Action turnstart = (turn_angle > 0) ? (PlanAction.Action.startLeft) : (PlanAction.Action.startRight);
-        PlanAction.Action turnstop = (turn_angle > 0) ? (PlanAction.Action.stopLeft) : (PlanAction.Action.stopRight);
+        float burntime = Math.max(DELTA_T - turn_time, 0.0f);
 
         //plan.add(new PlanAction(start_time, PlanAction.Action.fire));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
-        plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
-        plan.add(new PlanAction(start_time, turnstart));
-        plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000),turnstop));
+
+        if(turn_angle > 0.0f) {
+            if(m_GameData.getTurningRight()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+            }
+            plan.add(new PlanAction(start_time, PlanAction.Action.startLeft));
+            plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.stopLeft));
+        } else if(turn_angle < 0.0f) {
+            if(m_GameData.getTurningLeft()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+            }
+            plan.add(new PlanAction(start_time, PlanAction.Action.startRight));
+            plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.stopRight));
+        } else {
+            if(m_GameData.getTurningRight()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+            }
+            if(m_GameData.getTurningLeft()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+            }
+        }
+
         if(Math.abs(turn_angle) > 1.0f) { //If already close to heading, just keep burning
+            if(m_GameData.getMovingForward()) {
+                plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
+            }
             plan.add(new PlanAction(start_time+(long)Math.round(turn_time * 1000), PlanAction.Action.startForward));
             plan.add(new PlanAction(start_time+(long)Math.round((turn_time+burntime)*1000), PlanAction.Action.stopForward));
         } else {
@@ -410,4 +483,4 @@ public class Main
 
         metrics.addPlanMetrics(newPos, newV, turn_angle);
     }
-}
+ }

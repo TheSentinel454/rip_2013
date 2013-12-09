@@ -151,11 +151,7 @@ public class Main
 			// Evaluate the Decision tree to see if we need to add any extra actions
 			ArrayList<Float> asteroidsToDestroy = evaluateDecisionTree();
 			for(Float asteroidAngle: asteroidsToDestroy)
-			{
-				System.out.println("Fire at: " + asteroidAngle);
-				// TODO: Add fire action and necessary movement to destroy asteroid (Tweak time...)
 				plan.add(new PlanAction(System.currentTimeMillis(), PlanAction.Action.fire));
-			}
 
 			float target_h;
 			//Safe distance gets decreased each time search fails to find target heading
@@ -167,7 +163,7 @@ public class Main
 				exclusions = calculateExclusions(ship, asteroids, new_met);
 
 				//Select heading
-				target_h = selectHeading(ship, asteroids, exclusions);
+				target_h = selectHeading(ship, asteroids, exclusions, asteroidsToDestroy);
 
 			} while (target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
 			//Don't let safe distance become arbitrarily small
@@ -224,10 +220,8 @@ public class Main
 						boolean prediction = ((LeafData)m_DecisionTree.find(criteria).getUserObject()).getPrediction();
 						// See if we predicted that we need to fire
 						if (prediction)
-						{
 							// Add asteroid to list
 							asteroidAngles.add(asteroidData.getAngle());
-						}
 						// Add Training Data to list so that it can be evaluated later
 						TrainingData trainData = new TrainingData(System.currentTimeMillis(), criteria, metric.getPercent_safe(), prediction, 0, m_GameData.getScore(), m_GameData.getLives());
 						m_TrainingData.add(trainData);
@@ -235,6 +229,8 @@ public class Main
 				}
 				// Sort the training data (by time)
 				Collections.sort(m_TrainingData);
+				// Sort the angles
+				Collections.sort(asteroidAngles);
 			}
 		}
 		catch (Exception e)
@@ -570,9 +566,17 @@ public class Main
 		return exclusions;
 	}
 
-	private static float selectHeading(EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions)
+	private static float selectHeading(EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, ArrayList<Float> asteroidsToDestroy)
 	{
-		return exclusions.findClosestSafeHeading(0.0f);
+		if (asteroidsToDestroy != null && asteroidsToDestroy.size() > 0)
+		{
+			Float heading = exclusions.checkForSafeFireHeading(asteroidsToDestroy);
+			if (heading == null)
+				heading = exclusions.findClosestSafeHeading(0.0f);
+			return heading;
+		}
+		else
+			return exclusions.findClosestSafeHeading(0.0f);
 	}
 
 	private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics)

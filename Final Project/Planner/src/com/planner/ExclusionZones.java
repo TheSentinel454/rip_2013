@@ -79,6 +79,37 @@ public class ExclusionZones {
         return safeHeading;
     }
 
+	public Float checkForSafeFireHeading(ArrayList<Float> fireHeadings)
+	{
+		Float safeHeading = null;
+		int index = 0;
+		for(int ndx = 0; ndx < exclusions.size() && index < fireHeadings.size(); ndx++)
+		{
+			ExcludePoint excludePoint = exclusions.get(ndx);
+			// See if the heading
+			if(excludePoint.getHeading() > fireHeadings.get(index))
+			{
+				// Check for safe heading
+				if (excludePoint.isSafe())
+				{
+					// Found a safe heading
+					safeHeading = fireHeadings.get(index);
+					System.out.println("Found safe heading: " + safeHeading);
+					break;
+				}
+				// Unsafe heading
+				else
+				{
+					// Move to the next index in fire headings
+					index++;
+					ndx = 0;
+					System.out.println("No safe heading: " + index);
+				}
+			}
+		}
+		return safeHeading;
+	}
+
     public int size() {
         return exclusions.size();
     }

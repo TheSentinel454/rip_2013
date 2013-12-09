@@ -18,7 +18,7 @@ public class Main
 	private static float SAFETY_FACTOR;
 	private static float DELTA_T;
 	private static float HEADING_RANGE;
-	private static float WRAP_MARGIN = 10.0f;
+	private static float WRAP_MARGIN = 25.0f;
 
 	/* Private Attributes */
 	private static QueryInterface m_Server;
@@ -141,6 +141,7 @@ public class Main
 
 				//Select heading
 				target_h = selectHeading(ship, asteroids, exclusions);
+
 			} while (target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
 			//Don't let safe distance become arbitrarily small
 
@@ -177,10 +178,10 @@ public class Main
 			float world_width = m_GameData.getWidth() + 2 * ast.getRadius();
 			float world_height = m_GameData.getHeight() + 2 * ast.getRadius();
 
-			boolean wrap_right = ast.getPosition().x > ((m_GameData.getWidth() / 2) - WRAP_MARGIN);
-			boolean wrap_left = ast.getPosition().x < (-1 * (m_GameData.getWidth() / 2) + WRAP_MARGIN);
-			boolean wrap_up = ast.getPosition().y > ((m_GameData.getHeight() / 2) - WRAP_MARGIN);
-			boolean wrap_down = ast.getPosition().y < (-1 * (m_GameData.getHeight() / 2) + WRAP_MARGIN);
+			boolean wrap_right = ast.getPosition().x > (m_GameData.getWidth() - WRAP_MARGIN);
+			boolean wrap_left = ast.getPosition().x < WRAP_MARGIN;
+			boolean wrap_up = ast.getPosition().y > (m_GameData.getHeight() - WRAP_MARGIN);
+			boolean wrap_down = ast.getPosition().y < WRAP_MARGIN;
 
 			Vector2 newPos;
 			if (wrap_right)
@@ -288,8 +289,7 @@ public class Main
 				angle -= 360.0f;
 			}
 			float distance = relpos.len();
-			float impactTime = -1.0f;
-			boolean inRange = (angle <= HEADING_RANGE) || (angle >= 360.0f - HEADING_RANGE);
+			float impactTime = Float.MAX_VALUE;
 			boolean intersect;
 
 			//is the relative velocity between the exclusion points?
@@ -303,14 +303,11 @@ public class Main
 
 			if (intersect)
 			{
-				impactTime = distance / relv.len();
+				impactTime = (distance - config_radius) / relv.len();
 			}
 
 			//Time step is minimum of default delta-t and smallest time to impact
-			if (impactTime >= 0.0f && impactTime < DELTA_T)
-			{
-				DELTA_T = impactTime * 0.75f;
-			}
+			DELTA_T = Math.min(impactTime, DELTA_T);
 
 			metrics.addAsteroid(distance, angle, impactTime, HEADING_RANGE);
 		}

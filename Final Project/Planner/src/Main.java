@@ -1,36 +1,40 @@
 import com.badlogic.gdx.math.Vector2;
 import com.planner.*;
 import com.planner.machinelearning.DecisionTree;
+import com.planner.machinelearning.LeafData;
+import com.planner.machinelearning.SearchCriteria;
+import com.planner.machinelearning.TrainingData;
 import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
 import com.rip.javasteroid.remote.QueryInterface;
 
 import java.rmi.Naming;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class Main
 {
 	/* Constants */
-	private static final int GAMES_TO_PLAY = 1;
-	private static float SAFE_DISTANCE;
-	private static float SAFETY_FACTOR;
-	private static float DELTA_T;
-	private static float HEADING_RANGE;
-	private static float WRAP_MARGIN = 25.0f;
+	private static final int    GAMES_TO_PLAY = 100;
+	private static float        SAFE_DISTANCE;
+	private static float        SAFETY_FACTOR;
+	private static float        DELTA_T;
+	private static float        HEADING_RANGE;
+	private static float        WRAP_MARGIN = 25.0f;
+	private static boolean      KILL_GAME = true;
 
 	/* Private Attributes */
-	private static QueryInterface m_Server;
-	private static PlanExecutor m_Executor;
-	private static GameData m_GameData;
-	private static ArrayList<PlanAction> m_Plan;
-	private static ArrayList<Metrics> m_Metrics;
-	private static DecisionTree m_DecisionTree;
+	private static QueryInterface           m_Server;
+	private static PlanExecutor             m_Executor;
+	private static GameData                 m_GameData;
+	private static ArrayList<Metrics>       m_Metrics;
+	private static DecisionTree             m_DecisionTree;
+	private static ArrayList<TrainingData>  m_TrainingData;
 
 	/**
 	 * Main entry point for the application
-	 *
 	 * @param args - Planner Arguments
 	 */
 	public static void main(String[] args)
@@ -47,14 +51,9 @@ public class Main
 			// Initialize the decision tree for the machine learning
 			m_DecisionTree = new DecisionTree();
 			m_DecisionTree.printTree();
-			m_DecisionTree.train(true, 0.0f, 0.0f, 0.0f, true);
-			m_DecisionTree.train(true, 1.0f, 0.0f, 0.0f, true);
-			m_DecisionTree.train(true, 4.0f, 0.0f, 0.0f, false);
-			m_DecisionTree.train(true, 3.0f, 0.0f, 0.0f, false);
-			m_DecisionTree.printTree();
 
-			m_Plan = new ArrayList<PlanAction>();
 			m_Metrics = new ArrayList<Metrics>();
+			m_TrainingData = new ArrayList<TrainingData>();
 
 			int iGameCount = 1;
 			do
@@ -66,11 +65,16 @@ public class Main
 					// Check to see if the game is over
 					if (m_GameData.isGameOver())
 					{
-						// TODO: Save out any relevant machine learning data
-						// TODO: Reset the planner
-						// TODO: Save out results (Score, etc.)
+						// Quickly resolve all pending training data to be unsuccessful
+						trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
+						// Save out the decision tree data
+						m_DecisionTree.saveTree(iGameCount);
+						m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						// Reset the game
 						m_Server.reset();
+						// Wait till the game is reset
+						while(m_Server.getGameData().isGameOver())
+							Thread.sleep(1);
 						// Refresh the game data
 						m_GameData = m_Server.getGameData();
 						// Increment counter to know we just did another round
@@ -83,8 +87,7 @@ public class Main
 						}
 					}
 					// Execute the planner and set the plan
-					m_Plan = determinePlan();
-					m_Executor.setPlan(m_Plan);
+					m_Executor.setPlan(determinePlan());
 					Thread.sleep(1);
 				}
 				catch (Throwable e)
@@ -98,10 +101,26 @@ public class Main
 			m_Executor.kill();
 			// Wait for the thread (5 seconds)
 			m_Executor.join(5000);
+			// Kill the Game
+			m_Server.quit();
 		}
 		catch (Throwable e)
 		{
 			System.out.println("Main.main(): " + e.getMessage());
+		}
+		finally
+		{
+			if (m_Server != null)
+			{
+				try
+				{
+					if (KILL_GAME)
+						// Kill the Game
+						m_Server.quit();
+				}
+				catch (RemoteException e)
+				{}
+			}
 		}
 	}
 
@@ -129,8 +148,16 @@ public class Main
 
 			Metrics new_met = new Metrics(pullTime);
 
-			float target_h;
+			// Evaluate the Decision tree to see if we need to add any extra actions
+			ArrayList<Float> asteroidsToDestroy = evaluateDecisionTree();
+			for(Float asteroidAngle: asteroidsToDestroy)
+			{
+				System.out.println("Fire at: " + asteroidAngle);
+				// TODO: Add fire action and necessary movement to destroy asteroid (Tweak time...)
+				plan.add(new PlanAction(System.currentTimeMillis(), PlanAction.Action.fire));
+			}
 
+			float target_h;
 			//Safe distance gets decreased each time search fails to find target heading
 			do
 			{
@@ -160,6 +187,9 @@ public class Main
 					action.shiftTime(planDiff);
 				}
 			}
+
+			// Train the Decision Tree
+			trainDecisionTree(false, new_met);
 		}
 		catch (Throwable t)
 		{
@@ -167,6 +197,84 @@ public class Main
 		}
 		// Return the plan
 		return plan;
+	}
+
+	/**
+	 * Evaluate the Decision Tree
+	 * @return The IDs of the Asteroids that we should shoot at
+	 */
+	private static ArrayList<Float> evaluateDecisionTree()
+	{
+		ArrayList<Float> asteroidAngles = new ArrayList<Float>();
+		try
+		{
+			synchronized (m_TrainingData)
+			{
+				// See if we have any metrics
+				if (m_Metrics.size() > 0)
+				{
+					// Get the latest metric
+					Metrics metric = m_Metrics.get(m_Metrics.size() - 1);
+					// Go through each of the metrics for each asteroid
+					for(AsteroidData asteroidData: metric.getAsteroidMetrics())
+					{
+						// Check the decision tree for this asteroid metric
+						SearchCriteria criteria = new SearchCriteria(asteroidData.isTransited(), asteroidData.getDistance(), asteroidData.getImpactTime() / 1000.0f, asteroidData.getAngle());
+						// Get the prediction
+						boolean prediction = ((LeafData)m_DecisionTree.find(criteria).getUserObject()).getPrediction();
+						// See if we predicted that we need to fire
+						if (prediction)
+						{
+							// Add asteroid to list
+							asteroidAngles.add(asteroidData.getAngle());
+						}
+						// Add Training Data to list so that it can be evaluated later
+						TrainingData trainData = new TrainingData(System.currentTimeMillis(), criteria, metric.getPercent_safe(), prediction, 0, m_GameData.getScore(), m_GameData.getLives());
+						m_TrainingData.add(trainData);
+					}
+				}
+				// Sort the training data (by time)
+				Collections.sort(m_TrainingData);
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println("Main.evaluateDecisionTree(): " + e.getMessage());
+		}
+		return asteroidAngles;
+	}
+
+	/**
+	 * Train the decision tree if there are any previous actions that need to be evaluated
+	 */
+	private static void trainDecisionTree(boolean gameOver, Metrics metrics)
+	{
+		try
+		{
+			synchronized (m_TrainingData)
+			{
+				boolean success;
+				// Go through the list of training data
+				for(int i = m_TrainingData.size() - 1; i >= 0; i--)
+				{
+					TrainingData data = m_TrainingData.get(i);
+					// Is this training data up for evaluation (If the game is over, they all are)
+					if (gameOver || data.isTimeUp())
+					{
+						// Let's determine the "Success" of this training
+						success = ((data.getScore() > m_GameData.getScore() && data.getLives() >= m_GameData.getLives()) || data.getSafePercentage() <= metrics.getPercent_safe());
+						// Let's look up the node, and train it based on the outcome
+						m_DecisionTree.train(data.getSearchCriteria(), success);
+						// Now lets remove the training data
+						m_TrainingData.remove(i);
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println("Main.trainDecisionTree(): " + e.getMessage());
+		}
 	}
 
 	private static void wrapScreen(ArrayList<EntityData> asteroids)

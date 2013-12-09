@@ -54,6 +54,8 @@ public class AsteroidEngine implements Screen, ContactListener
 	private Boolean				m_NewBullet = false;
 	private Boolean				m_GameOver = false;
 	private Boolean				m_Reset = false;
+	private long				m_StartGameTimestamp = 0L;
+	private long				m_EndGameTimestamp = 0L;
 
 	public AsteroidEngine()
 	{
@@ -70,6 +72,7 @@ public class AsteroidEngine implements Screen, ContactListener
 		m_Ship = new Ship(new Vector2(AsteroidEngine.WIDTH / 2, AsteroidEngine.HEIGHT / 2), m_World);
 		m_Asteroids = new ArrayList<Asteroid>();
 		m_GameOver = false;
+		m_StartGameTimestamp = System.currentTimeMillis();
 
 		// Generate a few asteroids to start the game
 		generateNewAsteroid();
@@ -109,8 +112,11 @@ public class AsteroidEngine implements Screen, ContactListener
 			m_Ship.draw(m_SpriteBatch);
 			if (m_GameOver)
 				m_Font.drawMultiLine(m_SpriteBatch, "GAME OVER\n Press 'R' to restart!", WIDTH / 2, HEIGHT / 2, 15f, BitmapFont.HAlignment.CENTER);
+			else
+				m_EndGameTimestamp = System.currentTimeMillis();
 			m_Font.draw(m_SpriteBatch, "Lives: " + m_GameData.getLives(), 10, HEIGHT - 10);
 			m_Font.draw(m_SpriteBatch, "Score: " + m_GameData.getScore(), 210, HEIGHT - 10);
+			m_Font.draw(m_SpriteBatch, "Time: " + (m_GameData.getGameTime() / 1000.0f) + " seconds", 10, 20);
 			m_SpriteBatch.end();
 
 			synchronized (m_Asteroids)
@@ -122,6 +128,7 @@ public class AsteroidEngine implements Screen, ContactListener
 			m_Ship.update(delta);
 			m_GameData.updateShipData(m_Ship);
 			m_GameData.updateGameState(m_GameOver);
+			m_GameData.updateElapsedTime(m_EndGameTimestamp - m_StartGameTimestamp);
 			m_World.step(BOX_STEP, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
 
 			// Handle any Asteroid collisions
@@ -140,6 +147,7 @@ public class AsteroidEngine implements Screen, ContactListener
 							// Game over
 							m_GameOver = true;
 							m_Timer.cancel();
+							m_EndGameTimestamp = System.currentTimeMillis();
 						}
 						entity.destroy();
 					}
@@ -356,6 +364,10 @@ public class AsteroidEngine implements Screen, ContactListener
 
 			// Start schedule to create the asteroids
 			scheduleNewAsteroidCreation();
+
+			// Reset the timestamps
+			m_StartGameTimestamp = System.currentTimeMillis();
+			m_EndGameTimestamp = 0L;
 		}
 	}
 

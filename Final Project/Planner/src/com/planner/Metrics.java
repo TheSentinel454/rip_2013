@@ -19,6 +19,7 @@ public class Metrics {
     public Metrics(long time) {
         this.timestamp = time;
         this.asteroidMetrics = new ArrayList<AsteroidData>();
+	    this.percent_safe = 0.0f;
     }
 
     public void addAsteroid(float distance, float angle, float impact, float HEADING_RANGE) {

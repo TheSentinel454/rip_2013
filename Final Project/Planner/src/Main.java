@@ -73,7 +73,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = 13;
+			int iGameCount = 23;
 			do
 			{
 				try
@@ -189,7 +189,7 @@ public class Main
 
 				//Select heading
 				fire_h = selectFireHeading(asteroidsToDestroy);
-				target_h = selectHeading(exclusions, fire_h);
+				target_h = selectHeading(exclusions);
 
 			} while (target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
 			//Don't let safe distance become arbitrarily small
@@ -725,10 +725,9 @@ public class Main
 	/**
 	 *
 	 * @param exclusions
-	 * @param fireHeading
 	 * @return
 	 */
-	private static float selectHeading(ExclusionZones exclusions, float fireHeading)
+	private static float selectHeading(ExclusionZones exclusions)
 	{
 //		if (PLAN_TYPE.contains(PlannerType.DecisionTree))
 //		{

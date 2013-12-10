@@ -581,7 +581,7 @@ public class Main
 
 	private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics)
 	{
-		float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
+		float turn_angle = (target_h <= 180.0f) ? (target_h) : (target_h - 360.0f);
 		float turn_time = (float) Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
 		float burntime = Math.max(DELTA_T - turn_time, 0.0f);
 

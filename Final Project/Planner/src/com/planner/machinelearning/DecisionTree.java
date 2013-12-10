@@ -16,7 +16,7 @@ import java.util.Enumeration;
 public class DecisionTree implements Serializable
 {
 	/* Constants */
-	private static final String DECISION_TREE_FILENAME = "DecisionTree-%s.dt";
+	private static final String DECISION_TREE_FILENAME = "DecisionTree.dt";
 	private static final String DECISION_TREE_FILENAME_CSV = "DecisionTree-%s.csv";
 
 	/* Private Attributes */
@@ -89,7 +89,7 @@ public class DecisionTree implements Serializable
 					node.add(new DefaultMutableTreeNode(new LeafData(0.00f, 0, 0)));
 			}
 			// Finally save the tree as the default
-			saveTree(0);
+			saveTree();
 		}
 	}
 
@@ -134,14 +134,14 @@ public class DecisionTree implements Serializable
 	/**
 	 * Save the tree to a file
 	 */
-	public void saveTree(int gameNumber)
+	public void saveTree()
 	{
 		OutputStream buffer = null;
 		ObjectOutput output = null;
 		try
 		{
 			// Serialize the List
-			buffer = new BufferedOutputStream(new FileOutputStream(String.format(DECISION_TREE_FILENAME, gameNumber)));
+			buffer = new BufferedOutputStream(new FileOutputStream(DECISION_TREE_FILENAME));
 			output = new ObjectOutputStream(buffer);
 			output.writeObject(this);
 			output.flush();

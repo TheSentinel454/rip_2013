@@ -68,7 +68,7 @@ public class Main
 						// Quickly resolve all pending training data to be unsuccessful
 						trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
 						// Save out the decision tree data
-						m_DecisionTree.saveTree(iGameCount);
+						m_DecisionTree.saveTree();
 						m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						// Reset the game
 						m_Server.reset();

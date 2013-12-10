@@ -13,17 +13,30 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public class Main
 {
+	/**
+	 * Planner types
+	 */
+	public enum PlannerType
+	{
+		Navigation,
+		ConstantFire,
+		DecisionTree,
+		Preview
+	}
+
 	/* Constants */
-	private static final int    GAMES_TO_PLAY = 100;
-	private static float        SAFE_DISTANCE;
-	private static float        SAFETY_FACTOR;
-	private static float        DELTA_T;
-	private static float        HEADING_RANGE;
-	private static float        WRAP_MARGIN = 25.0f;
-	private static boolean      KILL_GAME = true;
+	private static final int            GAMES_TO_PLAY = 100;
+	private static float                SAFE_DISTANCE;
+	private static float                SAFETY_FACTOR;
+	private static float                DELTA_T;
+	private static float                HEADING_RANGE;
+	private static float                WRAP_MARGIN = 25.0f;
+	private static boolean              KILL_GAME = true;
+	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.DecisionTree);
 
 	/* Private Attributes */
 	private static QueryInterface           m_Server;
@@ -32,6 +45,7 @@ public class Main
 	private static ArrayList<Metrics>       m_Metrics;
 	private static DecisionTree             m_DecisionTree;
 	private static ArrayList<TrainingData>  m_TrainingData;
+
 
 	/**
 	 * Main entry point for the application
@@ -65,11 +79,15 @@ public class Main
 					// Check to see if the game is over
 					if (m_GameData.isGameOver())
 					{
-						// Quickly resolve all pending training data to be unsuccessful
-						trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
-						// Save out the decision tree data
-						m_DecisionTree.saveTree();
-						m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
+						// See if decision tree is included
+						if (PLAN_TYPE.contains(PlannerType.DecisionTree))
+						{
+							// Quickly resolve all pending training data to be unsuccessful
+							trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
+							// Save out the decision tree data
+							m_DecisionTree.saveTree();
+							m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
+						}
 						// Reset the game
 						m_Server.reset();
 						// Wait till the game is reset
@@ -147,11 +165,15 @@ public class Main
 			HEADING_RANGE = 5.0f;
 
 			Metrics new_met = new Metrics(pullTime);
-
 			// Evaluate the Decision tree to see if we need to add any extra actions
-			ArrayList<Float> asteroidsToDestroy = evaluateDecisionTree();
-			for(Float asteroidAngle: asteroidsToDestroy)
-				plan.add(new PlanAction(System.currentTimeMillis(), PlanAction.Action.fire));
+			ArrayList<Float> asteroidsToDestroy = null;
+			// See if decision tree is included
+			if (PLAN_TYPE.contains(PlannerType.DecisionTree))
+			{
+				asteroidsToDestroy = evaluateDecisionTree();
+				for(Float asteroidAngle: asteroidsToDestroy)
+					plan.add(new PlanAction(System.currentTimeMillis(), PlanAction.Action.fire));
+			}
 
 			float target_h;
 			//Safe distance gets decreased each time search fails to find target heading
@@ -179,13 +201,14 @@ public class Main
 				//Shift plan times to account for execution time
 				long planDiff = System.currentTimeMillis() - pullTime;
 				for (PlanAction action : plan)
-				{
 					action.shiftTime(planDiff);
-				}
 			}
-
-			// Train the Decision Tree
-			trainDecisionTree(false, new_met);
+			// See if decision tree is included
+			if (PLAN_TYPE.contains(PlannerType.DecisionTree))
+			{
+				// Train the Decision Tree
+				trainDecisionTree(false, new_met);
+			}
 		}
 		catch (Throwable t)
 		{
@@ -427,8 +450,8 @@ public class Main
 			deltaV[ndx] = new Vector2(1f, 0f);
 			deltaV[ndx].rotate(delta_theta[ndx]);
 			float scalar = Ship.SHIP_LINEAR_ACCELERATION * (DELTA_T - (float) Math.toRadians(delta_theta[ndx] < 180
-			                                                                                 ? delta_theta[ndx]
-			                                                                                 : Math.abs(delta_theta[ndx] - 360.0f)) / Ship.SHIP_ANGULAR_VELOCITY);
+																							 ? delta_theta[ndx]
+																							 : Math.abs(delta_theta[ndx] - 360.0f)) / Ship.SHIP_ANGULAR_VELOCITY);
 			deltaV[ndx].scl(Math.max(0.0f, scalar));
 		}
 
@@ -529,8 +552,8 @@ public class Main
 				ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
 
 				float inc_angle = occ_point[1].angle() - occ_point[0].angle() + ((occ_point[1].angle() - occ_point[0].angle() >= 0)
-				                                                                 ? (0)
-				                                                                 : (360.0f));
+																				 ? (0)
+																				 : (360.0f));
 
 				for (int ndx = 0; ndx < occ_intersect.size(); ndx++)
 				{
@@ -539,16 +562,16 @@ public class Main
 					Vector2 dv = new Vector2(1f, 0f);
 					dv.rotate(ang);
 					dv.scl(Ship.SHIP_LINEAR_ACCELERATION * (DELTA_T - (float) Math.toRadians(ang < 180
-					                                                                         ? ang
-					                                                                         : Math.abs(ang - 360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
+																							 ? ang
+																							 : Math.abs(ang - 360.0f)) / Ship.SHIP_ANGULAR_VELOCITY));
 					dv.rotate(shipAngle).add(relv);
 
 					ang = occ_point[1].angle() - dv.angle() + ((occ_point[1].angle() - dv.angle() >= 0)
-					                                           ? (0)
-					                                           : (360.0f));
+															   ? (0)
+															   : (360.0f));
 					ang += dv.angle() - occ_point[0].angle() + ((dv.angle() - occ_point[0].angle() >= 0)
-					                                            ? (0)
-					                                            : (360.0f));
+																? (0)
+																: (360.0f));
 
 					//Safe if sum of angles is greater than angle between occlusion points
 					new_excludes.add(new ExcludePoint(occ_intersect.get(ndx), ang > inc_angle));
@@ -581,52 +604,60 @@ public class Main
 
 	private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, ArrayList<EntityData> asteroids, ExclusionZones exclusions, float target_h, long start_time, Metrics metrics)
 	{
-		float turn_angle = (target_h <= 180.0f) ? (target_h) : (360.0f - target_h);
+		float turn_angle = (target_h <= 180.0f) ? (target_h) : (target_h - 360.0f);
 		float turn_time = (float) Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
 		float burntime = Math.max(DELTA_T - turn_time, 0.0f);
 
-		//plan.add(new PlanAction(start_time, PlanAction.Action.fire));
-
-		if (turn_angle > 0.0f)
+		// See if decision tree is included
+		if (PLAN_TYPE.contains(PlannerType.ConstantFire))
 		{
-			if (m_GameData.getTurningRight())
-			{
-				plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
-			}
-			plan.add(new PlanAction(start_time, PlanAction.Action.startLeft));
-			plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.stopLeft));
-		} else if (turn_angle < 0.0f)
-		{
-			if (m_GameData.getTurningLeft())
-			{
-				plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
-			}
-			plan.add(new PlanAction(start_time, PlanAction.Action.startRight));
-			plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.stopRight));
-		} else
-		{
-			if (m_GameData.getTurningRight())
-			{
-				plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
-			}
-			if (m_GameData.getTurningLeft())
-			{
-				plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
-			}
+			plan.add(new PlanAction(start_time, PlanAction.Action.fire));
 		}
 
-		if (Math.abs(turn_angle) > 1.0f)
-		{ //If already close to heading, just keep burning
-			if (m_GameData.getMovingForward())
-			{
-				plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
-			}
-			plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.startForward));
-			plan.add(new PlanAction(start_time + (long) Math.round((turn_time + burntime) * 1000), PlanAction.Action.stopForward));
-		} else
+		// See if decision tree is included
+		if (PLAN_TYPE.contains(PlannerType.Navigation))
 		{
-			plan.add(new PlanAction(start_time, PlanAction.Action.startForward));
-			plan.add(new PlanAction(start_time + (long) (DELTA_T * 1000), PlanAction.Action.stopForward));
+			if (turn_angle > 0.0f)
+			{
+				if (m_GameData.getTurningRight())
+				{
+					plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+				}
+				plan.add(new PlanAction(start_time, PlanAction.Action.startLeft));
+				plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.stopLeft));
+			} else if (turn_angle < 0.0f)
+			{
+				if (m_GameData.getTurningLeft())
+				{
+					plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+				}
+				plan.add(new PlanAction(start_time, PlanAction.Action.startRight));
+				plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.stopRight));
+			} else
+			{
+				if (m_GameData.getTurningRight())
+				{
+					plan.add(new PlanAction(start_time, PlanAction.Action.stopRight));
+				}
+				if (m_GameData.getTurningLeft())
+				{
+					plan.add(new PlanAction(start_time, PlanAction.Action.stopLeft));
+				}
+			}
+
+			if (Math.abs(turn_angle) > 1.0f)
+			{ //If already close to heading, just keep burning
+				if (m_GameData.getMovingForward())
+				{
+					plan.add(new PlanAction(start_time, PlanAction.Action.stopForward));
+				}
+				plan.add(new PlanAction(start_time + (long) Math.round(turn_time * 1000), PlanAction.Action.startForward));
+				plan.add(new PlanAction(start_time + (long) Math.round((turn_time + burntime) * 1000), PlanAction.Action.stopForward));
+			} else
+			{
+				plan.add(new PlanAction(start_time, PlanAction.Action.startForward));
+				plan.add(new PlanAction(start_time + (long) (DELTA_T * 1000), PlanAction.Action.stopForward));
+			}
 		}
 
 		Vector2 newV = new Vector2(1.0f, 0.0f);

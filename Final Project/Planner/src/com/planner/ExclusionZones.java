@@ -7,7 +7,6 @@ import java.util.ArrayList;
  * User: Stef
  * Date: 12/7/13
  * Time: 8:26 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ExclusionZones {
     private ArrayList<ExcludePoint> exclusions;
@@ -78,39 +77,6 @@ public class ExclusionZones {
             }
         }
         return safeHeading;
-    }
-
-	public Float checkForSafeFireHeading(ArrayList<Float> fireHeadings)
-	{
-		Float safeHeading = null;
-		int index = 0;
-		for(int ndx = 0; ndx < exclusions.size() && index < fireHeadings.size(); ndx++)
-		{
-			ExcludePoint excludePoint = exclusions.get(ndx);
-			// See if the heading
-			if(excludePoint.getHeading() > fireHeadings.get(index))
-			{
-				// Check for safe heading
-				if (excludePoint.isSafe())
-				{
-					// Found a safe heading
-					safeHeading = fireHeadings.get(index);
-					break;
-				}
-				// Unsafe heading
-				else
-				{
-					// Move to the next index in fire headings
-					index++;
-					ndx = 0;
-				}
-			}
-		}
-		return safeHeading;
-	}
-
-    public int size() {
-        return exclusions.size();
     }
 
     public float getPercentSafe() {

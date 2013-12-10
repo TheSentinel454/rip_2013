@@ -1,4 +1,5 @@
-\documentclass[10pt,final,conference]{IEEEtran}
+%\documentclass[10pt,final,conference]{IEEEtran}
+\documentclass[10pt,final,conference]{article}
 
 \usepackage{amsmath,amsfonts,amssymb,amscd,amsthm,xspace}
 \usepackage{algorithm}
@@ -37,6 +38,9 @@ The planner utilizes several processes in order to maximize the potential future
 
 \section{Related Work}
 
+A significant amount of literature exists for the problem of navigation with mobile obstacles. This literature tends to fall into one of two categories - local methods or global methods, based on how obstacles influence robot behavior \cite{khansari2012dynamical}. Local methods include bug algorithms and the Vector Field Histogram, while global methods include artifical potential fields and visibility graphs. Local methods tend to run rapidly but may not find feasible paths, while global methods will find a valid solution if there is one but tend to be slow. Given that our environment can be frequently changing as asteroids collide or are struck by bullets and break apart, a local method would appear to be a better choice to allow for rapid replanning; however, including some ability to look ahead is critical in an environment with moving obstacles. 
+
+The selected approach for navigation planning is based on the concept of velocity obstacles, which takes into account all future obstacle/robot future relative positions, assuming constant velocities \cite{fiorini1998motion}. The constant velocity assumption is acceptable for our problem as the plan will be rebuilt frequently, which will account for any asteroid-asteroid or asteroid-bullet interactions. While the exact approach used will be described in detail later, the concept is to convert the space and time domain into a purely spatial representation which can be easily searched for collisions. This results in a velocity space representation of the robot and obstacles, which is then used for planning. This approach, unlike some navigation methods, generalizes well to real-world applications of robots with limited sensors and domain knowledge, and has been used for autonomous surface vessel navigation in the crowded Singapore harbor \cite{bandyophadyay2010simple}. 
 
 \section{Methods}
 

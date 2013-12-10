@@ -70,7 +70,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = 23;
+			int iGameCount = 2;
 			do
 			{
 				try
@@ -87,8 +87,8 @@ public class Main
 							trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
 							// Save out the decision tree data
 							m_DecisionTree.saveTree();
-							m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						}
+						m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						// Reset the game
 						m_Server.reset();
 						// Wait till the game is reset
@@ -186,7 +186,7 @@ public class Main
 
 				//Select heading
 				fire_h = selectFireHeading(asteroidsToDestroy);
-				target_h = selectHeading(exclusions, fire_h);
+				target_h = selectHeading(exclusions);
 
 			} while (target_h < 0.0f && SAFE_DISTANCE > ship.getRadius() * (1.0f + SAFETY_FACTOR));
 			//Don't let safe distance become arbitrarily small
@@ -722,16 +722,10 @@ public class Main
 	/**
 	 *
 	 * @param exclusions
-	 * @param fireHeading
 	 * @return
 	 */
-	private static float selectHeading(ExclusionZones exclusions, float fireHeading)
+	private static float selectHeading(ExclusionZones exclusions)
 	{
-//		if (PLAN_TYPE.contains(PlannerType.DecisionTree))
-//		{
-//			// Find the closest safe heading based on current heading
-//			return exclusions.findClosestSafeHeading(0.0f);
-//		}
 		return exclusions.findClosestSafeHeading(0.0f);
 	}
 

@@ -7,7 +7,6 @@ import java.util.ArrayList;
  * User: Stef
  * Date: 12/7/13
  * Time: 8:26 PM
- * To change this template use File | Settings | File Templates.
  */
 public class ExclusionZones {
     private ArrayList<ExcludePoint> exclusions;

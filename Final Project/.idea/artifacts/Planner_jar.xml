@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Planner:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Planner_jar</output-path>
+    <root id="archive" name="Planner.jar">
+      <element id="module-output" name="Planner" />
+      <element id="module-output" name="JavAsteroid" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid/libs/gdx.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid/libs/gdx-sources.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

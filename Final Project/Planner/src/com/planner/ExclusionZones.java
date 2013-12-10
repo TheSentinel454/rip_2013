@@ -95,7 +95,6 @@ public class ExclusionZones {
 				{
 					// Found a safe heading
 					safeHeading = fireHeadings.get(index);
-					System.out.println("Found safe heading: " + safeHeading);
 					break;
 				}
 				// Unsafe heading
@@ -104,7 +103,6 @@ public class ExclusionZones {
 					// Move to the next index in fire headings
 					index++;
 					ndx = 0;
-					System.out.println("No safe heading: " + index);
 				}
 			}
 		}

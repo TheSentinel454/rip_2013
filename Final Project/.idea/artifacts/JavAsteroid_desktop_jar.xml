@@ -1,0 +1,16 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="JavAsteroid-desktop:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/JavAsteroid_desktop_jar</output-path>
+    <root id="archive" name="JavAsteroid-desktop.jar">
+      <element id="module-output" name="JavAsteroid-desktop" />
+      <element id="module-output" name="JavAsteroid" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid/libs/gdx.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid/libs/gdx-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid-desktop/libs/gdx-natives.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid-desktop/libs/gdx-backend-lwjgl.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid-desktop/libs/gdx-backend-lwjgl-natives.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/JavAsteroid-desktop/libs/gdx-backend-lwjgl-sources.jar" path-in-jar="/" />
+      <element id="dir-copy" path="$PROJECT_DIR$/JavAsteroid-android/assets" />
+    </root>
+  </artifact>
+</component>

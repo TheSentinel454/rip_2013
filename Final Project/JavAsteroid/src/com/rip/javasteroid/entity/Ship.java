@@ -28,7 +28,7 @@ public class Ship extends BaseEntity
 	public static final float SHIP_LINEAR_ACCELERATION = 125.0f;
 	public static final float SHIP_MAX_LINEAR_VELOCITY = 60.0f;
 	public static final float SHIP_DRAG_COEFFICIENT = 0.0f;
-	public static final float FIRE_COOLDOWN = 0.20f;
+	public static final float FIRE_COOLDOWN = 0.15f;
 	public static final float SHIP_ANGULAR_VELOCITY = 1.5f;
 
 	public void setMoving(boolean moving)

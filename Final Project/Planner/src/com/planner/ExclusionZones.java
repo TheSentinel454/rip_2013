@@ -74,6 +74,7 @@ public class ExclusionZones {
                     int backward_ndx =(ndx-1 < 0 && !exclusions.get(exclusions.size()-1).isSafe()) ? (exclusions.size()-2) : ((ndx+exclusions.size()-1)%exclusions.size());
                     safeHeading = Math.min(exclusions.get(forward_ndx).getHeading(), exclusions.get(backward_ndx).getHeading());
                 }
+                break;
             }
         }
         return safeHeading;

@@ -13,6 +13,8 @@ public class Metrics {
     private long timestamp;
     private Vector2 position;
     private Vector2 velocity;
+    private float turn_angle_abs;
+    private float deltaT;
     private float percent_safe;
     private ArrayList<AsteroidData> asteroidMetrics;
 
@@ -30,6 +32,7 @@ public class Metrics {
     public void addPlanMetrics(Vector2 pos, Vector2 vel, float turn_angle) {
         this.position = pos;
         this.velocity = vel;
+        this.turn_angle_abs = Math.abs(turn_angle);
 
         boolean transit;
         for(AsteroidData ast : asteroidMetrics) {
@@ -50,6 +53,8 @@ public class Metrics {
         return position;
     }
 
+    public float getTurnAngleAbs() { return turn_angle_abs; }
+
     public Vector2 getVelocity() {
         return velocity;
     }
@@ -58,9 +63,12 @@ public class Metrics {
         return percent_safe;
     }
 
+    public float getDeltaT() { return deltaT; }
     public ArrayList<AsteroidData> getAsteroidMetrics() {
         return asteroidMetrics;
     }
+
+    public void setDeltaT(float dt) { deltaT = dt;}
 
     public void setPercent_safe(float percent_safe) {
         this.percent_safe = percent_safe;

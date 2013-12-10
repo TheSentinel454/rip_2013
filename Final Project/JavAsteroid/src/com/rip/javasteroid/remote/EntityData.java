@@ -81,7 +81,16 @@ public class EntityData implements Serializable
 		m_Radius = radius;
 	}
 
-	/**
+
+    public EntityData(EntityData ed)
+    {
+        m_Position = ed.getPosition();
+        m_Velocity = ed.getVelocity();
+        m_Angle = ed.getAngle();
+        m_Radius = ed.getRadius();
+    }
+
+    /**
 	 * Update the entity data with the entity information
 	 * @param entity - Entity to update with
 	 */

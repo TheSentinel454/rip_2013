@@ -15,7 +15,7 @@ public class Bullet extends BaseEntity
 	/* Constants */
 	public static final float BULLET_VELOCITY 	= 500.0f;
 	private static final float LIFE_TIME 		= 3.0f;	// 3 seconds
-	private static final float BULLET_RADIUS 	= 1.5f;
+	public static final float BULLET_RADIUS 	= 1.5f;
 
 	/* Private Attributes */
 	private float m_Life = 0.0f;

@@ -448,6 +448,30 @@ public class Main
 
             float[][] theta_diff = new float[2][theta.length];
 
+            config_radius = asteroid.getRadius() + Bullet.BULLET_RADIUS;
+            if (config_radius > relpos.len())
+            {
+                rotate_angle = 90.0f;
+            } else
+            {
+                rotate_angle = (float) Math.toDegrees(Math.asin(config_radius / relpos.len()));
+            }
+
+            occ_angle = new float[2];
+            occ_angle[0] = relpos.angle() - rotate_angle;
+            occ_angle[1] = occ_angle[0] + 2 * rotate_angle;
+            for (int ndx = 0; ndx < occ_angle.length; ndx++)
+            {
+                while (occ_angle[ndx] < 0.0f)
+                {
+                    occ_angle[ndx] += 360.0f;
+                }
+                while (occ_angle[ndx] >= 360.0f)
+                {
+                    occ_angle[ndx] -= 360.0f;
+                }
+            }
+
             // Occlusion point boundaries are rays of constant theta
             for (int ndx = 0; ndx < theta.length; ndx++)
             {

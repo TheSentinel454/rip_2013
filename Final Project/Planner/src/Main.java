@@ -30,7 +30,7 @@ public class Main
 	}
 
 	/* Constants */
-	private static final int            GAMES_TO_PLAY = 100;
+	private static final int            GAMES_TO_PLAY = 200;
 	private static float                SAFE_DISTANCE;
 	private static float                SAFETY_FACTOR;
 	private static float                DELTA_T;
@@ -70,7 +70,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = 1;
+			int iGameCount = 23;
 			do
 			{
 				try
@@ -172,8 +172,6 @@ public class Main
 			if (PLAN_TYPE.contains(PlannerType.DecisionTree))
 			{
 				asteroidsToDestroy = evaluateDecisionTree();
-				//for(ExclusionZones asteroidExclusions: asteroidsToDestroy)
-				//	plan.add(new PlanAction(System.currentTimeMillis(), PlanAction.Action.fire));
 			}
 
 			float target_h;
@@ -729,11 +727,11 @@ public class Main
 	 */
 	private static float selectHeading(ExclusionZones exclusions, float fireHeading)
 	{
-		if (PLAN_TYPE.contains(PlannerType.DecisionTree))
-		{
-			// Find the closest safe heading based on current heading
-			return exclusions.findClosestSafeHeading(fireHeading);
-		}
+//		if (PLAN_TYPE.contains(PlannerType.DecisionTree))
+//		{
+//			// Find the closest safe heading based on current heading
+//			return exclusions.findClosestSafeHeading(0.0f);
+//		}
 		return exclusions.findClosestSafeHeading(0.0f);
 	}
 
@@ -748,7 +746,7 @@ public class Main
 		if (asteroidsToDestroy != null && PLAN_TYPE.contains(PlannerType.DecisionTree))
 		{
 			// Utilize the safest heading to calculate the closest unsafe heading (which is the location we need to fire)
-			fireHeading = asteroidsToDestroy.findClosestUnsafeHeading(0.0f);
+			fireHeading = asteroidsToDestroy.findClosestHeading(0.0f, false, 0);
 		}
 		return fireHeading;
 	}

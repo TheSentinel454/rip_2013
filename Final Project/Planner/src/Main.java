@@ -377,18 +377,18 @@ public class Main
 		//Time step to examine - default to time required to do 180 degree turn and accelerate to 25% of max velocity
 		DELTA_T = (float) (Math.PI / Ship.SHIP_ANGULAR_VELOCITY + 0.25f * Ship.SHIP_MAX_LINEAR_VELOCITY / Ship.SHIP_LINEAR_ACCELERATION);
 
-		//Calculate bullet velocity circle
-		int granularity = 1000; //per semicircle
-		float[] delta_theta = new float[2 * granularity + 1];
-		Vector2[] deltaV = new Vector2[delta_theta.length];
+        //Calculate bullet velocity circle
+        int granularity = 1000; //per semicircle
+        float[] delta_theta = new float[2 * granularity + 1];
+        Vector2[] deltaV = new Vector2[delta_theta.length];
 
-		for (int ndx = 0; ndx < deltaV.length; ndx++)
-		{
-			delta_theta[ndx] = (360.0f * ndx) / (2 * granularity);
-			deltaV[ndx] = new Vector2(1f, 0f);
-			deltaV[ndx].rotate(delta_theta[ndx]);
-			deltaV[ndx].scl(Bullet.BULLET_VELOCITY);
-		}
+        for (int ndx = 0; ndx < deltaV.length; ndx++)
+        {
+            delta_theta[ndx] = (360.0f * ndx) / (2 * granularity);
+            deltaV[ndx] = new Vector2(1f, 0f);
+            deltaV[ndx].rotate(delta_theta[ndx]);
+            deltaV[ndx].scl(Bullet.BULLET_VELOCITY);
+        }
 
 		//Asteroid state metrics
 		for (EntityData asteroid : asteroids)
@@ -458,115 +458,115 @@ public class Main
 			//Time step is minimum of default delta-t and smallest time to impact
 			DELTA_T = Math.min(impactTime, DELTA_T);
 
-			Vector2[] reachableV = new Vector2[deltaV.length];
-			float[] theta = new float[deltaV.length];
+            Vector2[] reachableV = new Vector2[deltaV.length];
+            float[] theta = new float[deltaV.length];
 
-			//Add bullet curve to relative velocity
-			for (int ndx = 0; ndx < deltaV.length; ndx++)
-			{
-				reachableV[ndx] = new Vector2(deltaV[ndx]);
-				reachableV[ndx].rotate(shipAngle);
-				reachableV[ndx].sub(asteroid.getVelocity());
-				theta[ndx] = reachableV[ndx].angle();
-			}
+            //Add bullet curve to relative velocity
+            for (int ndx = 0; ndx < deltaV.length; ndx++)
+            {
+                reachableV[ndx] = new Vector2(deltaV[ndx]);
+                reachableV[ndx].rotate(shipAngle);
+                reachableV[ndx].sub(asteroid.getVelocity());
+                theta[ndx] = reachableV[ndx].angle();
+            }
 
-			//Determine excluded headings from delta-V curve based on occlusion points of velocity obstacle
-			//Excluded headings come from intersection of occlusion point rays with curve - rays are theta = constant
-			//Find thetas on delta-V curve bracketing ray theta, interval bisection to find intersection vector
-			//Up to 4 intersections per ray (0-8 per obstacle)
+            //Determine excluded headings from delta-V curve based on occlusion points of velocity obstacle
+            //Excluded headings come from intersection of occlusion point rays with curve - rays are theta = constant
+            //Find thetas on delta-V curve bracketing ray theta, interval bisection to find intersection vector
+            //Up to 4 intersections per ray (0-8 per obstacle)
 
-			ArrayList<Float> occ_intersect = new ArrayList<Float>();
+            ArrayList<Float> occ_intersect = new ArrayList<Float>();
 
-			float[][] theta_diff = new float[2][theta.length];
+            float[][] theta_diff = new float[2][theta.length];
 
-			config_radius = asteroid.getRadius() + Bullet.BULLET_RADIUS;
-			if (config_radius > relpos.len())
-			{
-				rotate_angle = 90.0f;
-			} else
-			{
-				rotate_angle = (float) Math.toDegrees(Math.asin(config_radius / relpos.len()));
-			}
+            config_radius = asteroid.getRadius() + Bullet.BULLET_RADIUS;
+            if (config_radius > relpos.len())
+            {
+                rotate_angle = 90.0f;
+            } else
+            {
+                rotate_angle = (float) Math.toDegrees(Math.asin(config_radius / relpos.len()));
+            }
 
-			occ_angle = new float[2];
-			occ_angle[0] = relpos.angle() - rotate_angle;
-			occ_angle[1] = occ_angle[0] + 2 * rotate_angle;
-			for (int ndx = 0; ndx < occ_angle.length; ndx++)
-			{
-				while (occ_angle[ndx] < 0.0f)
-				{
-					occ_angle[ndx] += 360.0f;
-				}
-				while (occ_angle[ndx] >= 360.0f)
-				{
-					occ_angle[ndx] -= 360.0f;
-				}
-			}
+            occ_angle = new float[2];
+            occ_angle[0] = relpos.angle() - rotate_angle;
+            occ_angle[1] = occ_angle[0] + 2 * rotate_angle;
+            for (int ndx = 0; ndx < occ_angle.length; ndx++)
+            {
+                while (occ_angle[ndx] < 0.0f)
+                {
+                    occ_angle[ndx] += 360.0f;
+                }
+                while (occ_angle[ndx] >= 360.0f)
+                {
+                    occ_angle[ndx] -= 360.0f;
+                }
+            }
 
-			// Occlusion point boundaries are rays of constant theta
-			for (int ndx = 0; ndx < theta.length; ndx++)
-			{
-				for (int occ_ndx = 0; occ_ndx < 2; occ_ndx++)
-				{
-					theta_diff[occ_ndx][ndx] = theta[ndx] - occ_angle[occ_ndx];
-					// Locate crossings by finding sign changes of theta - occlusion_theta
-					if (theta_diff[occ_ndx][ndx] == 0.0f)
-					{
-						occ_intersect.add(delta_theta[ndx]);
-					} else if (ndx > 0 && theta_diff[occ_ndx][ndx] * theta_diff[occ_ndx][ndx - 1] < 0.0f)
-					{
-						//TODO: Convert to zero-finding with interval bisection
-						float interp = (delta_theta[ndx] - delta_theta[ndx - 1]) / (theta_diff[occ_ndx][ndx] - theta_diff[occ_ndx][ndx - 1]) * theta_diff[occ_ndx][ndx] + delta_theta[ndx];
-						occ_intersect.add(interp);
-					}
-				}
-			}
+            // Occlusion point boundaries are rays of constant theta
+            for (int ndx = 0; ndx < theta.length; ndx++)
+            {
+                for (int occ_ndx = 0; occ_ndx < 2; occ_ndx++)
+                {
+                    theta_diff[occ_ndx][ndx] = theta[ndx] - occ_angle[occ_ndx];
+                    // Locate crossings by finding sign changes of theta - occlusion_theta
+                    if (theta_diff[occ_ndx][ndx] == 0.0f)
+                    {
+                        occ_intersect.add(delta_theta[ndx]);
+                    } else if (ndx > 0 && theta_diff[occ_ndx][ndx] * theta_diff[occ_ndx][ndx - 1] < 0.0f)
+                    {
+                        //TODO: Convert to zero-finding with interval bisection
+                        float interp = (delta_theta[ndx] - delta_theta[ndx - 1]) / (theta_diff[occ_ndx][ndx] - theta_diff[occ_ndx][ndx - 1]) * theta_diff[occ_ndx][ndx] + delta_theta[ndx];
+                        occ_intersect.add(interp);
+                    }
+                }
+            }
 
-			//Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
-			//rather than simplistic heading exclusion
+            //Future improvement - use area of delta-V curve and calculate intersection with exclusion cones
+            //rather than simplistic heading exclusion
 
-			if (occ_intersect.isEmpty())
-			{
-				occ_intersect.add(360.0f);
-			}
+            if (occ_intersect.isEmpty())
+            {
+                occ_intersect.add(360.0f);
+            }
 
-			//March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
-			Collections.sort(occ_intersect);
-			if (occ_intersect.get(occ_intersect.size() - 1) != 360.0f)
-			{
-				occ_intersect.add(360.0f);
-			}
+            //March around delta_theta, at each occlusion heading check if it starts or ends an exclusion zone
+            Collections.sort(occ_intersect);
+            if (occ_intersect.get(occ_intersect.size() - 1) != 360.0f)
+            {
+                occ_intersect.add(360.0f);
+            }
 
-			ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
+            ArrayList<ExcludePoint> new_excludes = new ArrayList<ExcludePoint>();
 
-			float inc_angle = occ_angle[1] - occ_angle[0] + ((occ_angle[1] - occ_angle[0] >= 0)
-					? (0)
-					: (360.0f));
+            float inc_angle = occ_angle[1] - occ_angle[0] + ((occ_angle[1] - occ_angle[0] >= 0)
+                    ? (0)
+                    : (360.0f));
 
-			for (int ndx = 0; ndx < occ_intersect.size(); ndx++)
-			{
-				float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx - 1))) + occ_intersect.get(ndx));
+            for (int ndx = 0; ndx < occ_intersect.size(); ndx++)
+            {
+                float ang = 0.5f * (((ndx == 0) ? (0.0f) : (occ_intersect.get(ndx - 1))) + occ_intersect.get(ndx));
 
-				Vector2 dv = new Vector2(1f, 0f);
-				dv.rotate(ang);
-				dv.scl(Bullet.BULLET_VELOCITY);
-				dv.rotate(shipAngle);
-				dv.sub(asteroid.getVelocity());
+                Vector2 dv = new Vector2(1f, 0f);
+                dv.rotate(ang);
+                dv.scl(Bullet.BULLET_VELOCITY);
+                dv.rotate(shipAngle);
+                dv.sub(asteroid.getVelocity());
 
-				ang = occ_angle[1] - dv.angle() + ((occ_angle[1] - dv.angle() >= 0)
-						? (0)
-						: (360.0f));
-				ang += dv.angle() - occ_angle[0] + ((dv.angle() - occ_angle[0] >= 0)
-						? (0)
-						: (360.0f));
+                ang = occ_angle[1] - dv.angle() + ((occ_angle[1] - dv.angle() >= 0)
+                        ? (0)
+                        : (360.0f));
+                ang += dv.angle() - occ_angle[0] + ((dv.angle() - occ_angle[0] >= 0)
+                        ? (0)
+                        : (360.0f));
 
-				//Safe if sum of angles is greater than angle between occlusion points
-				new_excludes.add(new ExcludePoint(occ_intersect.get(ndx), ang > inc_angle));
-			}
+                //Safe if sum of angles is greater than angle between occlusion points
+                new_excludes.add(new ExcludePoint(occ_intersect.get(ndx), ang > inc_angle));
+            }
 
-			//Merge new exclusion headings with existing
-			ExclusionZones fireZones = new ExclusionZones();
-			fireZones.addAll(new_excludes);
+            //Merge new exclusion headings with existing
+            ExclusionZones fireZones = new ExclusionZones();
+            fireZones.addAll(new_excludes);
 
 			metrics.addAsteroid(distance, angle, impactTime, HEADING_RANGE, fireZones);
 		}

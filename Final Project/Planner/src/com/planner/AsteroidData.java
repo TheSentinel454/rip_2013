@@ -17,13 +17,15 @@ public class AsteroidData {
     private float distance; //distance to asteroid
     private float impactTime; //time to asteroid impact
     private float angle; //angle from front of ship to asteroid
+    private ExclusionZones fireZones; //"unsafe" zones are good for firing
     private boolean inRange;
     private boolean transit;
 
-    public AsteroidData(float distance, float angle, float impactTime) {
+    public AsteroidData(float distance, float angle, float impactTime, ExclusionZones fireZones) {
         this.distance = distance;
         this.impactTime = impactTime;
         this.angle = angle;
+        this.fireZones = fireZones;
     }
 
     public void setInRange(boolean inRange) {
@@ -52,5 +54,9 @@ public class AsteroidData {
 
     public boolean isTransited() {
         return transit;
+    }
+
+    public ExclusionZones getFireZones() {
+        return fireZones;
     }
 }

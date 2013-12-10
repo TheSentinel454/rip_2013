@@ -22,8 +22,8 @@ public class Metrics {
 	    this.percent_safe = 0.0f;
     }
 
-    public void addAsteroid(float distance, float angle, float impact, float HEADING_RANGE) {
-        AsteroidData newAst = new AsteroidData(distance, angle, impact);
+    public void addAsteroid(float distance, float angle, float impact, float HEADING_RANGE, ExclusionZones firezones) {
+        AsteroidData newAst = new AsteroidData(distance, angle, impact, firezones);
         newAst.setInRange(angle <= HEADING_RANGE || angle >= 360.0f - HEADING_RANGE);
         asteroidMetrics.add(newAst);
     }

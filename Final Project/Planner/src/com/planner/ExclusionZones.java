@@ -29,9 +29,6 @@ public class ExclusionZones {
             int add_ndx = 0;
 
             while(exist_ndx < existing.length && add_ndx < add.length) {
-                float exist_h = existing[exist_ndx].getHeading();
-                float add_h = add[add_ndx].getHeading();
-
                 //Select smaller heading; if one of the two says it's unsafe, it's unsafe
                 boolean exist_min = (existing[exist_ndx].compareTo(add[add_ndx]) <= 0);
                 ExcludePoint minPoint = (exist_min) ? (existing[exist_ndx]) : (add[add_ndx]);
@@ -60,6 +57,10 @@ public class ExclusionZones {
         }
     }
 
+    public void addAll(ExclusionZones addZones) {
+        this.addAll(addZones.getExclusions());
+    }
+
     public float findClosestSafeHeading(float heading) {
         float safeHeading = -180.0f;
         for(int ndx = 0; ndx < exclusions.size(); ndx++) {
@@ -86,5 +87,9 @@ public class ExclusionZones {
             percentSafe += (arcSize * ((exclusions.get(ndx).isSafe()) ? (1.0f) : (0.0f))) / 360.0f;
         }
         return percentSafe;
+    }
+
+    public ArrayList<ExcludePoint> getExclusions() {
+        return exclusions;
     }
 }

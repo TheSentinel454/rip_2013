@@ -26,6 +26,9 @@ public class Main
 		Navigation,
 		ConstantFire,
 		DecisionTree,
+        StraightLine,
+        NearestSafe,
+        Safest,
 		Preview
 	}
 
@@ -37,7 +40,7 @@ public class Main
 	private static float                HEADING_RANGE;
 	private static float                WRAP_MARGIN = 25.0f;
 	private static boolean              KILL_GAME = true;
-	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.DecisionTree);
+	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.ConstantFire, PlannerType.NearestSafe);
 
 	/* Private Attributes */
 	private static QueryInterface           m_Server;
@@ -70,7 +73,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = 23;
+			int iGameCount = 13;
 			do
 			{
 				try
@@ -87,8 +90,8 @@ public class Main
 							trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
 							// Save out the decision tree data
 							m_DecisionTree.saveTree();
-							m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						}
+                        m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
 						// Reset the game
 						m_Server.reset();
 						// Wait till the game is reset
@@ -732,7 +735,18 @@ public class Main
 //			// Find the closest safe heading based on current heading
 //			return exclusions.findClosestSafeHeading(0.0f);
 //		}
-		return exclusions.findClosestSafeHeading(0.0f);
+
+        float heading = 180.0f;
+        if(PLAN_TYPE.contains(PlannerType.NearestSafe)) {
+            heading = exclusions.findClosestSafeHeading(0.0f);
+        }
+        if(PLAN_TYPE.contains(PlannerType.Safest)) {
+            //Not sure yet
+        }
+        if(PLAN_TYPE.contains(PlannerType.StraightLine)) {
+            heading = -m_GameData.getShipData().getAngle();
+        }
+		return heading;
 	}
 
 	/**

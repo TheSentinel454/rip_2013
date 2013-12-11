@@ -171,15 +171,13 @@ public class DecisionTree implements Serializable
 	/**
 	 * Save the tree to a file
 	 */
-	public void saveCsvTree(GameData gameData, int gameNumber)
+	public void saveCsvTree(int gameNumber)
 	{
 		BufferedWriter output = null;
 		try
 		{
 			// Serialize the List
 			output = new BufferedWriter(new FileWriter(String.format(DECISION_TREE_FILENAME_CSV, gameNumber)));
-			output.write("GameTime,Score\n");
-			output.write((gameData.getGameTime() / 1000.0f) + "," + gameData.getScore() + "\n");
 			output.write("On Path,Distance,Time Till Impact,Angle,Prediction,Ratio,Prediction%\n");
 			final String newRow = "%s,%s,%s,%s,%s,%s,%s\n";
 			// Just changing enumeration kind here

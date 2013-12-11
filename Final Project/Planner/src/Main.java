@@ -10,6 +10,7 @@ import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
 import com.rip.javasteroid.remote.QueryInterface;
 
+import java.io.*;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -33,14 +34,16 @@ public class Main
 	}
 
 	/* Constants */
-	private static final int            GAMES_TO_PLAY = 200;
+	private static final int            GAMES_TO_PLAY = 100;
+	private static final String         GAME_DATA_FILE = "GameData.csv";
+	private static final String         GAME_ID_FILE = "GameID.txt";
 	private static float                SAFE_DISTANCE;
 	private static float                SAFETY_FACTOR;
 	private static float                DELTA_T;
 	private static float                HEADING_RANGE;
 	private static float                WRAP_MARGIN = 25.0f;
 	private static boolean              KILL_GAME = true;
-	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.ConstantFire, PlannerType.NearestSafe);
+	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.DecisionTree, PlannerType.NearestSafe);
 
 	/* Private Attributes */
 	private static QueryInterface           m_Server;
@@ -73,7 +76,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = 23;
+			int iGameCount = getLastGameID();
 			do
 			{
 				try
@@ -90,8 +93,9 @@ public class Main
 							trainDecisionTree(true, (m_Metrics.size() == 0 ? new Metrics(System.currentTimeMillis()) : m_Metrics.get(m_Metrics.size() - 1)));
 							// Save out the decision tree data
 							m_DecisionTree.saveTree();
+							m_DecisionTree.saveCsvTree(iGameCount);
 						}
-                        m_DecisionTree.saveCsvTree(m_GameData, iGameCount);
+						saveGameData(iGameCount);
 						// Reset the game
 						m_Server.reset();
 						// Wait till the game is reset
@@ -101,6 +105,8 @@ public class Main
 						m_GameData = m_Server.getGameData();
 						// Increment counter to know we just did another round
 						iGameCount++;
+						// Save new game ID
+						saveGameID(iGameCount);
 						// Check counter to see if we have planned enough
 						if (iGameCount > GAMES_TO_PLAY)
 						{
@@ -143,6 +149,99 @@ public class Main
 				catch (RemoteException e)
 				{}
 			}
+		}
+	}
+
+	/**
+	 * Get the last game ID from the file
+	 * @return
+	 */
+	private static int getLastGameID()
+	{
+		int gameID = 1;
+		BufferedReader reader = null;
+		try
+		{
+			StringBuffer fileData = new StringBuffer();
+			reader = new BufferedReader(new FileReader(GAME_ID_FILE));
+			char[] buf = new char[1024];
+			int numRead=0;
+			while((numRead=reader.read(buf)) != -1)
+			{
+				String readData = String.valueOf(buf, 0, numRead);
+				fileData.append(readData);
+			}
+			gameID = Integer.valueOf(fileData.toString());
+		}
+		catch(Exception e)
+		{
+		}
+		finally
+		{
+			if (reader != null)
+				try
+				{
+					reader.close();
+				}
+				catch (IOException e)
+				{}
+		}
+		return gameID;
+	}
+
+	/**
+	 * Save the current game ID so we can resume if it crashes
+	 * @param gameID
+	 */
+	private static void saveGameID(int gameID)
+	{
+		PrintWriter output = null;
+		try
+		{
+			File gameIdFile = new File(GAME_ID_FILE);
+			if (gameIdFile.exists())
+				gameIdFile.delete();
+			output = new PrintWriter(new BufferedWriter(new FileWriter(GAME_ID_FILE)));
+			output.print(gameID);
+			output.flush();
+		}
+		catch(Exception e)
+		{
+		}
+		finally
+		{
+			if (output != null)
+				output.close();
+		}
+	}
+
+	/**
+	 * Save the game data to a CSV file
+	 * @param iGameCount Current game count
+	 */
+	private static void saveGameData(int iGameCount)
+	{
+		PrintWriter output = null;
+		try
+		{
+			File gameData = new File(GAME_DATA_FILE);
+			if (!gameData.exists())
+			{
+				output = new PrintWriter(new BufferedWriter(new FileWriter(gameData, true)));
+				output.println("Game,GameTime,Score");
+			}
+			else
+				output = new PrintWriter(new BufferedWriter(new FileWriter(gameData, true)));
+			output.println(iGameCount + "," + (m_GameData.getGameTime() / 1000.0f) + "," + m_GameData.getScore());
+			output.flush();
+		}
+		catch(Exception e)
+		{
+		}
+		finally
+		{
+			if (output != null)
+				output.close();
 		}
 	}
 

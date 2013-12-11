@@ -26,7 +26,7 @@ Group 2: Kyle Volle, Luke Tornquist, Steffan Slater, Xinyan Yan}
 \nocite{*}
 
 \begin{abstract}
-In this paper, planning and machine learning concepts are applied to the design of an autonomous agent to play an "asteroids" type computer game. 
+In this paper, planning and machine learning concepts are applied to the design of an autonomous agent to play an "asteroids" type computer game. The game presents unique challenges in limited movement range, spawning of more and smaller asteroids after a bullet impact, and elastic asteroid-asteroid interactions. Two components of the game are investigated - selecting a direction in which to move the craft and selecting a direction in which to fire bullets in an attempt to destroy asteroids and increase the score. A velocity obstacle approach is used to determine safe directions for the craft to travel, and one of those safe headings is selected in one of several manners.
 \end{abstract}
 
 \section{Member Responsibilities}
@@ -62,6 +62,33 @@ The planner interfaces with the game using Remote Method Invocation (RMI).  This
 
 \subsection{Navigation Planning}
 
+The navigation planning approach is based upon the velocity obstacle method described in \cite{fiorini1998motion}. The motion of the robot and a single obstacle is transformed into relative motion of the robot and a stationary obstacle at the same current position. The asteroid is then expanded by the radius of the robot plus a safety factor. This safety factor prevents this method from being complete, as it can cause the planner to miss potential feasible passages, but compensates for inaccuracies in the turning maneuvers and the slight lag of the planner behind the actual game execution. This expansion of the asteroid collapses the spacecraft to a point, moving the problem into the more tractable configuration space. 
+
+After expanding the asteroid, the exclusion cone of the obstacle is computed. This cone consists of two rays from the current robot position through the tangency points of the obstacle. Since the velocity obstacle approach transforms a moving obstacle to a stationary one, any robot velocity relative to the obstacle which falls into the exclusion cone will at some point result in a collision. The current relative velocity of the robot to the obstacle is then placed in the space, and may or may not be within the exclusion cone of the obstacle. It is then necessary to compute the range of possible relative velocities after some amount of time.
+
+The computation of the possible relative velocities is accomplished by computing the potential change in velocity in each direction based on the robot's current attitude. In Asteroids this presents an interesting problem, as the space of potential velocity changes is not a simple shape. While a two-degree-of-freedom actuated effector such as the print head on a 3D printer has a rectangular velocity change space (as the two directions are independent), and a vehicle which can apply a thrust linearly in any direction has a circular velocity change space, the craft in Asteroids can only accelerate forward and has a finite turn speed. This means that for a given amount of time, the craft can accumulate more change in velocity in a forward direction than in any other direction, as it must first turn before accelerating in that direction. This results in a heart-shaped velocity change space given by the equation:
+
+\begin{equation*}
+\Delta v(\theta) = a \left( \Delta t - \frac{\theta}{\omega} \right)
+\end{equation*}
+
+where $a$ is the acceleration of the craft and $\omega$ is the angular velocity while turning. This velocity change space is then rotated by the craft attitude and translated by the relative velocity to obtain the set of reachable relative velocities within the time step. The time step used is the time required to perform a 180-degree turn and accelerate to 25\% of the ship maximum velocity or the shortest time to impact, whichever is smaller. 
+
+The set of reachable relative velocities is then intersected with the exclusion cone to find which directions (headings) are safe for the craft to move along. This is done by calculating the angle from the current position to each point on the reachable velocity curve and searching for all points where that angle is equal to the angle of the edges of the exclusion cone, as those tangent lines are lines of constant angle (radial lines in polar coordinates). Which side of the intersection heading is safe is determined by picking a point on either side and taking the sum of the angles between the tangent lines and a line though the current position and that point. If the sum is equal to the angle between the two tangent lines, it is between the two and therefore in the exclusion zone. If that sum is greater than angle between the two tangents, it is outside the exclusion zone. This strategy will give the safe and unsafe heading ranges for the craft based on a single obstacle. The results for all obstacles can then be superimposed to get the overall safe and unsafe ranges. An example of a reachable velocity region with an exclusion cone is shown in Figure \ref{fig:reachable_veloc}, with the relative velocity in blue, the axis of the craft in dashed black, the reachable velocities in solid black, and the boundaries of the exclusion cone in red.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=3in]{./deltav_curve_rotated_translated_obstacle_color.png}
+\caption{Reachable Velocities with Exclusion Cone}
+\label{fig:reachable_veloc}
+\end{figure}
+
+To ensure that not all headings are excluded, only asteroids within some distance of the craft are considered. This distance can be modified by the planner, for example by reducing the search radius to open up more safe headings. From the set of safe headings, one heading is selected as the target and a rotation and acceleration maneuver to that heading is computed. The selection of the heading is the true job of the navigation planner. Most of the extant literature focuses on using the velocity obstacle approach to calculate a path to a goal point, but Asteroids does not have a goal point. The selection of the target heading must therefore be chosen in a different manner. One method that was considered, for example, was selecting the safe heading closest to the current direction, thereby minimizing the amount of turning that was to be carried out.
+
+\subsection{Decision Trees}
+Decision trees were used to predict whether we should or should not shoot at each particular asteroid.  We used decision trees as they allow us to classify particular situations based on a set of input variables, and learn from success and failure to learn over time.  This should allow the ship to get more adapt at figuring out when it is good to fire and when it is not.  The output of the tree is basically a classification for that particular set of variables in the tree, which correlates to the path from the leaf node to the root of the tree.  That classification maps to either true or false in our case, as we are trying to decide whether we should fire or not.
+
+
 
 \subsection{Decision Trees}
 Decision trees were used to predict whether we should or should not shoot at each particular asteroid.  We used decision trees as they allow us to classify particular situations based on a set of input variables, and learn from success and failure to learn over time.  This should allow the ship to get more adapt at figuring out when it is good to fire and when it is not.  The output of the tree is basically a classification for that particular set of variables in the tree, which correlates to the path from the leaf node to the root of the tree.  That classification maps to either true or false in our case, as we are trying to decide whether we should fire or not.
@@ -69,7 +96,7 @@ Decision trees were used to predict whether we should or should not shoot at eac
 \begin{figure}
 \centering
 \includegraphics[width=3.0in]{./CART_tree_titanic_survivors.png}
-\caption{Decision Tree - Example}
+\caption{Decision Tree - Example\cite{titanic}}
 \label{fig_decision_tree_example}
 \end{figure}
 

@@ -34,7 +34,7 @@ public class Main
 	}
 
 	/* Constants */
-	private static final int            GAMES_TO_PLAY = 100;
+	private static final int            GAMES_TO_PLAY = 116;
 	private static final String         GAME_DATA_FILE = "GameData.csv";
 	private static final String         GAME_ID_FILE = "GameID.txt";
 	private static float                SAFE_DISTANCE;
@@ -43,7 +43,7 @@ public class Main
 	private static float                HEADING_RANGE;
 	private static float                WRAP_MARGIN = 25.0f;
 	private static boolean              KILL_GAME = true;
-	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.DecisionTree, PlannerType.NearestSafe);
+	private static EnumSet<PlannerType> PLAN_TYPE = EnumSet.of(PlannerType.Navigation, PlannerType.DecisionTree, PlannerType.Safest);
 
 	/* Private Attributes */
 	private static QueryInterface           m_Server;
@@ -76,7 +76,7 @@ public class Main
 			m_Metrics = new ArrayList<Metrics>();
 			m_TrainingData = new ArrayList<TrainingData>();
 
-			int iGameCount = getLastGameID();
+			int iGameCount = 112;
 			do
 			{
 				try
@@ -471,6 +471,11 @@ public class Main
 	private static ExclusionZones calculateExclusions(EntityData ship, ArrayList<EntityData> asteroids, Metrics metrics)
 	{
 		ExclusionZones exclusions = new ExclusionZones();
+        {
+            ArrayList<ExcludePoint> baseExclude = new ArrayList<ExcludePoint>();
+            baseExclude.add(new ExcludePoint(360.0f, true));
+            exclusions.addAll(baseExclude);
+        }
 
 		float shipAngle = ship.getAngle();
 
@@ -828,18 +833,12 @@ public class Main
 	 */
 	private static float selectHeading(ExclusionZones exclusions)
 	{
-//		if (PLAN_TYPE.contains(PlannerType.DecisionTree))
-//		{
-//			// Find the closest safe heading based on current heading
-//			return exclusions.findClosestSafeHeading(0.0f);
-//		}
-
         float heading = 180.0f;
         if(PLAN_TYPE.contains(PlannerType.NearestSafe)) {
             heading = exclusions.findClosestSafeHeading(0.0f);
         }
         if(PLAN_TYPE.contains(PlannerType.Safest)) {
-            //Not sure yet
+            heading = exclusions.findSafestHeading();
         }
         if(PLAN_TYPE.contains(PlannerType.StraightLine)) {
             heading = -m_GameData.getShipData().getAngle();

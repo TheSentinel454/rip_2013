@@ -98,6 +98,38 @@ public class ExclusionZones {
         return this.findClosestHeading(heading, true, 0);
     }
 
+    public float findSafestHeading() {
+        float heading = -180.0f;
+        float maxrange = 0.0f;
+        float prevh;
+        float range;
+
+        if(exclusions.size() > 1) {
+            for(int ndx = 0; ndx < exclusions.size(); ndx++) {
+                if(ndx == 0) {
+                    prevh = (exclusions.size() > 2 && !(exclusions.get(exclusions.size()-1).isSafe() ^ exclusions.get(ndx).isSafe())) ? (exclusions.get(exclusions.size()-2).getHeading()) : (0.0f);
+                } else {
+                    prevh = exclusions.get(ndx-1).getHeading();
+                }
+                range = exclusions.get(ndx).getHeading() - prevh;
+                if(range < 0.0f) {
+                    range += 360.0f;
+                }
+                if(exclusions.get(ndx).isSafe() && range > maxrange) {
+                    maxrange = range;
+                    heading = prevh + 0.5f * maxrange;
+                    if(heading < 0.0f) {
+                        heading += 360.0f;
+                    }
+                }
+            }
+        } else if(exclusions.get(0).isSafe()) {
+            heading = 0.0f;
+        }
+
+        return heading;
+    }
+
 	public Float checkForSafeFireHeading(ArrayList<Float> fireHeadings)
 	{
 		Float safeHeading = null;

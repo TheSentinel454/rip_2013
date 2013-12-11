@@ -83,7 +83,7 @@ public class ExclusionZones {
                         backward_diff += 360.0f;
                     }
                     if(direction < 0 || (direction == 0 && forward_diff < backward_diff)) {
-                        safeHeading = backward_diff;
+                        safeHeading = exclusions.get(forward_ndx).getHeading();
                     } else {
                         safeHeading = exclusions.get(backward_ndx).getHeading();
                     }

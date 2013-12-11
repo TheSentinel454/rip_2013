@@ -51,4 +51,8 @@ public class RangeValue implements Serializable
 	{
 		return m_Name + ": " + Float.toString(m_MinimumValue) + "->" + Float.toString(m_MaximumValue);
 	}
+	public String toValueString()
+	{
+		return Float.toString(m_MinimumValue) + "->" + Float.toString(m_MaximumValue);
+	}
 }

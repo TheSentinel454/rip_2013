@@ -21,6 +21,7 @@ public class GameData implements Serializable
 	private final Integer m_Height;
 	private Integer m_Score = 0;
 	private Integer m_Lives = 3;
+	private Long m_ElapsedTime = 0L;
 	private EntityData m_ShipData;
 	private ArrayList<EntityData> m_AsteroidData;
 	private Boolean m_TurningRight = false;
@@ -71,6 +72,18 @@ public class GameData implements Serializable
 	}
 
 	/**
+	 * Update the elapsed game time
+	 * @param elapsedTime - Update the elapsed game time
+	 */
+	public void updateElapsedTime(long elapsedTime)
+	{
+		synchronized (m_ElapsedTime)
+		{
+			m_ElapsedTime = elapsedTime;
+		}
+	}
+
+	/**
 	 * Get the current life count
 	 * @return Life count
 	 */
@@ -91,6 +104,18 @@ public class GameData implements Serializable
 		synchronized (m_Score)
 		{
 			return m_Score;
+		}
+	}
+
+	/**
+	 * Get the game time
+	 * @return Game Time
+	 */
+	public long getGameTime()
+	{
+		synchronized (m_ElapsedTime)
+		{
+			return m_ElapsedTime;
 		}
 	}
 

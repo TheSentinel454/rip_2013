@@ -1,5 +1,7 @@
 package com.planner.machinelearning;
 
+import com.rip.javasteroid.GameData;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.io.*;
@@ -15,6 +17,7 @@ public class DecisionTree implements Serializable
 {
 	/* Constants */
 	private static final String DECISION_TREE_FILENAME = "DecisionTree.dt";
+	private static final String DECISION_TREE_FILENAME_CSV = "DecisionTree-%s.csv";
 
 	/* Private Attributes */
 	private DefaultMutableTreeNode m_Root;
@@ -40,8 +43,8 @@ public class DecisionTree implements Serializable
 			{
 				DefaultMutableTreeNode child = (DefaultMutableTreeNode) m_Root.getChildAt(a);
 				// Add the Distance Nodes
-				final int DISTANCE_INC = 25;
-				for(int b = 0; b < 100; b += DISTANCE_INC)
+				final int DISTANCE_INC = 100;
+				for(int b = 0; b < 1000; b += DISTANCE_INC)
 				{
 					DefaultMutableTreeNode distanceNode = new DefaultMutableTreeNode(new RangeValue("Distance", b, b + DISTANCE_INC));
 					// Add Distance clone to each node
@@ -55,7 +58,7 @@ public class DecisionTree implements Serializable
 					final int TTI_INC = 100;
 					for(int d = 0; d < 1000; d += TTI_INC)
 					{
-						DefaultMutableTreeNode ttiNode = new DefaultMutableTreeNode(new RangeValue("Time Till Impact", d, d + TTI_INC));
+						DefaultMutableTreeNode ttiNode = new DefaultMutableTreeNode(new RangeValue("Time Till Impact", d, (d == 1000 - TTI_INC ? Float.MAX_VALUE : d + TTI_INC)));
 						// Add Time Till Impact clone to each node
 						child2.add((DefaultMutableTreeNode)ttiNode.clone());
 					}
@@ -66,8 +69,8 @@ public class DecisionTree implements Serializable
 						for(int e = 0; e < child2.getChildCount(); e++)
 						{
 							DefaultMutableTreeNode child3 = (DefaultMutableTreeNode) child2.getChildAt(e);
-							final int ANGLE_INC = 15;
-							for(int f = 0; f < 180; f += ANGLE_INC)
+							final int ANGLE_INC = 30;
+							for(int f = 0; f < 360; f += ANGLE_INC)
 							{
 								DefaultMutableTreeNode angleNode = new DefaultMutableTreeNode(new RangeValue("Angle", f, f + ANGLE_INC));
 								// Add Angle clone to each node
@@ -86,7 +89,7 @@ public class DecisionTree implements Serializable
 					node.add(new DefaultMutableTreeNode(new LeafData(0.00f, 0, 0)));
 			}
 			// Finally save the tree as the default
-			saveTree(DECISION_TREE_FILENAME);
+			saveTree();
 		}
 	}
 
@@ -130,16 +133,15 @@ public class DecisionTree implements Serializable
 
 	/**
 	 * Save the tree to a file
-	 * @param filename - Filename to save the decision tree to
 	 */
-	public void saveTree(String filename)
+	public void saveTree()
 	{
 		OutputStream buffer = null;
 		ObjectOutput output = null;
 		try
 		{
 			// Serialize the List
-			buffer = new BufferedOutputStream(new FileOutputStream(filename));
+			buffer = new BufferedOutputStream(new FileOutputStream(DECISION_TREE_FILENAME));
 			output = new ObjectOutputStream(buffer);
 			output.writeObject(this);
 			output.flush();
@@ -167,14 +169,66 @@ public class DecisionTree implements Serializable
 	}
 
 	/**
+	 * Save the tree to a file
+	 */
+	public void saveCsvTree(int gameNumber)
+	{
+		BufferedWriter output = null;
+		try
+		{
+			// Serialize the List
+			output = new BufferedWriter(new FileWriter(String.format(DECISION_TREE_FILENAME_CSV, gameNumber)));
+			output.write("On Path,Distance,Time Till Impact,Angle,Prediction,Ratio,Prediction%\n");
+			final String newRow = "%s,%s,%s,%s,%s,%s,%s\n";
+			// Just changing enumeration kind here
+			Enumeration<DefaultMutableTreeNode> en = m_Root.preorderEnumeration();
+			while (en.hasMoreElements())
+			{
+				DefaultMutableTreeNode node = en.nextElement();
+				if (node.isLeaf())
+				{
+					LeafData leafData = (LeafData)node.getUserObject();
+					Object[] pathData = node.getUserObjectPath();
+					BooleanValue bvRelativeLocation = (BooleanValue)pathData[1];
+					RangeValue rvDistance = (RangeValue)pathData[2];
+					RangeValue rvTimeTillImpact = (RangeValue)pathData[3];
+					RangeValue rvAngle = null;
+					if (!bvRelativeLocation.getValue())
+						rvAngle = (RangeValue)pathData[4];
+					output.write(String.format(newRow,
+							bvRelativeLocation.getValue(),
+							rvDistance.toValueString(),
+							rvTimeTillImpact.toValueString(),
+							rvAngle != null ? rvAngle.toValueString() : "N/A",
+							leafData.getPrediction(),
+							Float.toString(leafData.getRatio() * 100.0f) + "%",
+							Float.toString(leafData.getProbability() * 100.0f) + "%"));
+				}
+			}
+			output.flush();
+		}
+		catch(Exception e)
+		{
+			System.out.println("DecisionTree.saveCsvTree(): ");
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (output != null)
+				try
+				{
+					output.close();
+				}
+				catch (IOException e){}
+		}
+	}
+
+	/**
 	 * Train the decision tree
-	 * @param relativeLocation Relative location to look for asteroids (On/Off Path)
-	 * @param distance Distance to look for asteroids
-	 * @param timeTillImpact Time till impact for the asteroid
-	 * @param angle Angle for the asteroid (Ignored in the case for On Path)
+	 * @param criteria Search criteria to find node
 	 * @param success True if successful, False otherwise
 	 */
-	public void train(boolean relativeLocation, float distance, float timeTillImpact, float angle, boolean success)
+	public void train(SearchCriteria criteria, boolean success)
 	{
 		// Make sure we have a root
 		if (m_Root != null)
@@ -183,19 +237,16 @@ public class DecisionTree implements Serializable
 			IntegerValue totalTrains = (IntegerValue)m_Root.getUserObject();
 			totalTrains.setValue(totalTrains.getValue() + 1);
 			// Find the specific Leaf node
-			((LeafData)find(relativeLocation, distance, timeTillImpact, angle).getUserObject()).train(success, totalTrains.getValue());
+			((LeafData)find(criteria).getUserObject()).train(success, totalTrains.getValue());
 		}
 	}
 
 	/**
 	 * Find a particular node based on the specified parameters
-	 * @param relativeLocation Relative location to look for asteroids (On/Off Path)
-	 * @param distance Distance to look for asteroids
-	 * @param timeTillImpact Time till impact for the asteroid
-	 * @param angle Angle for the asteroid (Ignored in the case for On Path)
+	 * @param criteria Search criteria to find node
 	 * @return Node if found, Otherwise the last leaf in the postorderEnumeration
 	 */
-	public DefaultMutableTreeNode find(boolean relativeLocation, float distance, float timeTillImpact, float angle)
+	public DefaultMutableTreeNode find(SearchCriteria criteria)
 	{
 		// Make sure we have a root
 		if (m_Root != null)
@@ -218,12 +269,11 @@ public class DecisionTree implements Serializable
 						rvAngle = (RangeValue)objects[4];
 
 					// See if we are good to go
-					if (relativeLocation == bvRelativeLocation.getValue() &&
-						rvDistance.inRange(distance) &&
-						rvTimeTillImpact.inRange(timeTillImpact) &&
-						(rvAngle == null || rvAngle.inRange(angle)))
+					if (criteria.isRelativeLocation() == bvRelativeLocation.getValue() &&
+						rvDistance.inRange(criteria.getDistance()) &&
+						rvTimeTillImpact.inRange(criteria.getTimeTillImpact()) &&
+						(rvAngle == null || rvAngle.inRange(criteria.getAngle())))
 					{
-						System.out.println("Found node: " + node.getUserObject().toString());
 						// Found the node
 						return node;
 					}

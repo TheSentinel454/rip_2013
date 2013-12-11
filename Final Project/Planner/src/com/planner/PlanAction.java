@@ -11,7 +11,7 @@ public class PlanAction implements Comparable<PlanAction>
 	@Override
 	public int compareTo(PlanAction o)
 	{
-		return (int)Math.signum(this.m_Time - o.getTime());
+		return (int)Math.signum(this.m_Time - o.m_Time);
 	}
 
 	/* Enum */

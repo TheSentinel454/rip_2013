@@ -56,6 +56,7 @@ public class LeafData implements Serializable
 			m_Successes++;
 		// Recalculate the ratio
 		m_Ratio = (m_Trains / (totalTrains * 1.0f));
+		//System.out.println("Trained: " + this.toString());
 	}
 
 	@Override

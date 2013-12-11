@@ -12,6 +12,7 @@ import com.planner.*;
 import com.rip.javasteroid.GameData;
 import com.rip.javasteroid.entity.Ship;
 import com.rip.javasteroid.remote.EntityData;
+import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,9 +41,9 @@ public class PreviewPlanner {
 	private static final float NOPATH = -10000.0f;
 	private static final float PERCENT_SAFE_BOUND = 0.05f;
 	private static final float PERCENT_SAFE_DISCOUNT = 0.2f;
-    private static final float TURN_SAFE_HALF_RANGE = 30.0f;
-    private static final float TURNPENALTY = -0.1f;
-    private static final float STICKBOUND = 3.0f;
+    private static final float TURN_SAFE_HALF_RANGE = 10.0f;
+    private static final float TURNPENALTY = -0.05f;
+    private static final float STICKBOUND = 6.0f;
     private static final float SHOOTBOUND = 20;
 
 
@@ -93,13 +94,25 @@ public class PreviewPlanner {
         }
     }
 
-	private float CalculateStateValue(State state) {
 
+    private float CalculateAsteroidScore(ArrayList<AsteroidData> asD) {
+        float minDist = Float.MAX_VALUE;
+        float dist = 0.0f;
+        for( AsteroidData asM : asD ) {
+            dist = asM.getDistance();
+            if (dist < minDist)
+                minDist = dist;
+        }
+        return 10*(float)Math.log(minDist/150);
+    }
+
+	private float CalculateStateValue(State state) {
 		float score = 0;
 		float percentSafeScore = state.met.getPercent_safe() * (float)Math.pow(PERCENT_SAFE_DISCOUNT, state.safeDistDecreaseTimes) * 100;
 		score += percentSafeScore;
-
-	//	asteroidsScore = CalculateAsteroidScore(state.met.getAsteroidMetrics());
+    	float asteroidsScore = CalculateAsteroidScore(state.met.getAsteroidMetrics());
+//        score += asteroidsScore;
+//        System.out.printf("Percentage score: %f, minDist score: %f%n", percentSafeScore, asteroidsScore);
 		return score;
 	}
 
@@ -186,7 +199,8 @@ public class PreviewPlanner {
 //		float dt = CalculatePlanTime(target_h, state.met.getDeltaT());
         float dt = state.met.getDeltaT();
 		PropagateAsteroids(nextAsteroids, dt);
-		wrapScreen(nextAsteroids);
+
+//		nextAsteroids = wrapScreen(nextAsteroids);
 
 		// Evaluation for next state
 		State nextState = CalculateEvaluation(nextShip, nextAsteroids);
@@ -247,7 +261,7 @@ public class PreviewPlanner {
         }
 
         for (int i = 0; i < Decision.NDECISIONS; i++)
-            System.out.printf("Path %d, value: %f%n", i, edgeRewards[i]);
+//            System.out.printf("Path %d, value: %f%n", i, edgeRewards[i]);
 
         arrayMax = GetMax(edgeRewards, 0, Decision.NDECISIONS);
         if (arrayMax.maxVal < NOPATH) {
@@ -256,12 +270,12 @@ public class PreviewPlanner {
         }
 
         if ( Math.abs(edgeRewards[lastDecision] - arrayMax.maxVal) < STICKBOUND) {
-            System.out.printf("Choose last decision %d%n", lastDecision);
+//           System.out.printf("Choose last decision %d%n", lastDecision);
             return lastDecision;
         }
 
 
-        System.out.printf("Choose path %d%n", arrayMax.index);
+//        System.out.printf("Choose path %d%n", arrayMax.index);
         lastDecision = arrayMax.index;
 
         return arrayMax.index;
@@ -358,7 +372,8 @@ public class PreviewPlanner {
 		startTime = System.currentTimeMillis();
 
 		try {
-			wrapScreen(asteroids);
+
+//            wrapScreen(asteroids);
 
             action = MakeDecision(ship, asteroids);
 
@@ -375,7 +390,10 @@ public class PreviewPlanner {
             return -180;
 		}
 
-		return action*HeadingUnit + HeadingStart;
+		float target_h = action*HeadingUnit + HeadingStart;
+//        if (target_h < 0) target_h += 360;
+
+        return target_h;
 	}
 
 
@@ -714,7 +732,7 @@ public class PreviewPlanner {
 	private void PropagateShip(EntityData ship, float target_h, Metrics metrics)
 	{
         float deltaT = metrics.getDeltaT();
-		float turn_angle = (target_h <= 180.0f) ? (target_h) : target_h-360;
+		float turn_angle = (target_h <= 180.0f) ? (target_h) : (target_h-360);
 		float turn_time = (float) Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;
 		float burntime = Math.max(deltaT - turn_time, 0.0f);
 

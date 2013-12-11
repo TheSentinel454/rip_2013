@@ -74,7 +74,8 @@ public class Main
             // Set plan type
             PLAN_TYPE = new ArrayList<PlannerType>();
             PLAN_TYPE.add(PlannerType.Navigation);
-            PLAN_TYPE.add(PlannerType.NearestSafe);
+//            PLAN_TYPE.add(PlannerType.NearestSafe);
+            PLAN_TYPE.add(PlannerType.Preview);
  //           PLAN_TYPE.add(PlannerType.ConstantFire);
 
 
@@ -131,7 +132,7 @@ public class Main
 					// Execute the planner and set the plan
 
 					m_Executor.setPlan(determinePlan());
-					Thread.sleep(1);
+					Thread.sleep(1000);
 
 				}
 				catch (Throwable e)
@@ -277,8 +278,7 @@ public class Main
 			EntityData ship = m_GameData.getShipData();
 			ArrayList<EntityData> asteroids = m_GameData.getAsteroidData();
 
-			wrapScreen(asteroids);
-
+            wrapScreen(asteroids);
 			ExclusionZones exclusions;
 
 			SAFETY_FACTOR = 0.20f;
@@ -484,6 +484,7 @@ public class Main
 		}
 
 		asteroids.addAll(wrapped_asteroids);
+
 	}
 
 	private static ExclusionZones calculateExclusions(EntityData ship, ArrayList<EntityData> asteroids, Metrics metrics)
@@ -835,6 +836,7 @@ public class Main
 
 		//Calculate safe percentage of headings
 		metrics.setPercent_safe(exclusions.getPercentSafe());
+        System.out.printf("Percentage safe: %f%n", exclusions.getPercentSafe());
 
 		return exclusions;
 	}
@@ -888,6 +890,7 @@ public class Main
 
 	private static void calculatePlan(ArrayList<PlanAction> plan, EntityData ship, float target_h, float fire_h, long start_time, Metrics metrics)
 	{
+        System.out.printf("target angle: %f%n", target_h);
 		float turn_angle = (target_h <= 180.0f) ? (target_h) : (target_h - 360.0f);
 		float fire_angle = (fire_h <= 180.0f) ? (fire_h) : (fire_h - 360.0f);
 		float turn_time = (float) Math.toRadians(Math.abs(turn_angle)) / Ship.SHIP_ANGULAR_VELOCITY;

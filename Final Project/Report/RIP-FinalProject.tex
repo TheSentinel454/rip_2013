@@ -144,6 +144,65 @@ For the Preview piece, we tweaked several parameters--1) running frequency of pl
 
 Overall, we did a variety of experiments with different flags on and off.  Each had their respective positives and negatives, but the details of those will be covered in the Analysis section.
 
+%\iffalse
+\begin{figure}[ht]
+\centering
+\begin{minipage}[b]{0.45\linewidth}
+\includegraphics[width=1\textwidth]{nearestConstant}
+\caption{Nearest Safe Heading, Constant Firing}
+\label{fig:nearestConstant}
+\end{minipage}
+\quad
+\begin{minipage}[b]{0.45\linewidth}
+\includegraphics[width=1\textwidth]{nearestDecision}
+\caption{Nearest Safe Heading, Decision Tree Firing}
+\label{fig:nearestDecision}
+\end{minipage}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{minipage}[b]{0.45\linewidth}
+\includegraphics[width=1\textwidth]{previewConstant}
+\caption{Preview Planning, Constant Firing}
+\label{fig:previewtConstant}
+\end{minipage}
+\quad
+\begin{minipage}[b]{0.45\linewidth}
+\includegraphics[width=1\textwidth]{safestDecision}
+\caption{Safest Heading, Decision Tree Firing}
+\label{fig:safestDecision}
+\end{minipage}
+\end{figure}
+%\fi
+
+\iffalse
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{nearestConstant}
+\caption{Nearest Safe Heading, Constant Firing}
+\label{fig:nearestConstant}
+\end{figure}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{nearestDecision}
+\caption{Nearest Safe Heading, Decision Tree Firing}
+\label{fig:nearestDecision}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{previewConstant}
+\caption{Preview Planning, Constant Firing}
+\label{fig:previewtConstant}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=0.45\textwidth]{safestDecision}
+\caption{Safest Heading, Decision Tree Firing}
+\label{fig:safestDecision}
+\end{figure}
+\fi
 \section{Analysis}
 
 The velocity obstacle method as presented in \cite{fiorini1998motion} is a complete algorithm for constant velocity obstacles without interactions. The modification to the velocity obstacle method used in this project sacrifices completeness for computational simplicity. The safety factor applied to the radius of the spacecraft inherently prevents the algorithm from being complete, as it can close off small passages through which the craft would fit with small clearances. This should (depending on the magnitude of the safety factor) have a small effect as most clearances will still be sufficiently large and the compensation for planner lag and small position and attitude errors is more important. A much larger impact on the completeness of the algorithm is the limiting the selection of the reachable velocities to the boundary of the reachable region, rather than the entire area. Strictly speaking, any velocity within the region is reachable, but limiting it only to the boundary immensely simplifies the necessary computations. This simplification, which always attains the maximum velocity change in the chosen direction, was also undertaken when planning for an autonomous surface craft avoiding obstacles in Singapore harbor \citep{bandyophadyay2010simple}. Limiting the radius of consideration for obstacle avoidance (obstacles outside that distance are ignored) also decreases completeness, as obstacles outside that range could be on impact paths. Rapid replanning mitigates this concern.
